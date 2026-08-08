@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight, CalendarDays, Camera, Check, ChevronDown, CirclePlay, Clock3,
-  MapPin, Menu, MessageCircleHeart, MessagesSquare, Pencil, Plus, Send, Trash2,
-  Users, X,
+  MapPin, Menu, MessageCircleHeart, MessagesSquare, Send, Users, X,
 } from 'lucide-react'
 import { api } from './api'
+import { AdminApp } from './admin/AdminApp'
 
 const socials = [
   { name: 'YouTube', url: 'https://www.youtube.com/@alcancevictoriabcnn', icon: CirclePlay },
@@ -39,11 +39,6 @@ const threeCs = [
   { title: 'Causa', subtitle: 'Tenemos una misión', copy: 'Vivimos para alcanzar a nuestra ciudad y al mundo con esperanza, valor y compromiso.' },
   { title: 'Corporación', subtitle: 'Servimos con orden', copy: 'Cuidamos la visión con responsabilidad, buena organización y rendición de cuentas.' },
 ]
-
-const emptyEvent = {
-  title: '', description: '', starts_at: '', location: 'Alcance Victoria Barcelona Norte',
-  category: 'Celebración', featured: false, published: true,
-}
 
 function Brand({ light = false }) {
   return (
@@ -165,28 +160,112 @@ function Schedule() {
   )
 }
 
-function EventCard({ event }) {
+function formatEventPrice(event, cents) {
+  return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: event.currency || 'EUR' })
+}
+
+function formatRegistrationDate(value) {
+  return new Date(value).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })
+}
+
+function getRegistrationState(event) {
+  if (event.registration_state) return event.registration_state
+  if (!event.registration_enabled) return 'disabled'
+  const now = new Date()
+  if (event.registration_opens_at && now < new Date(event.registration_opens_at)) return 'upcoming'
+  if (event.registration_closes_at && now >= new Date(event.registration_closes_at)) return 'closed'
+  return 'open'
+}
+
+function EventCard({ event, onSelect }) {
   const date = new Date(event.starts_at)
   return (
-    <article className={`event-card ${event.featured ? 'event-card--featured' : ''}`}>
+    <button type="button" className={`event-card ${event.featured ? 'event-card--featured' : ''}`} onClick={() => onSelect(event)} aria-label={`Ver detalles de ${event.title}`}>
       <div className="event-card__date"><strong>{date.toLocaleDateString('es-ES', { day: '2-digit' })}</strong><span>{date.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}</span></div>
-      <div><span className="tag">{event.category}</span><h3>{event.title}</h3><p>{event.description}</p><div className="event-card__meta"><span><Clock3 size={15} /> {date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span><span><MapPin size={15} /> {event.location}</span></div></div>
-    </article>
+      <div><span className="tag">{event.category}</span><h3>{event.title}</h3><p>{event.description}</p><div className="event-card__meta"><span><Clock3 size={15} /> {date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span><span><MapPin size={15} /> {event.location}</span></div><span className="event-card__action">Ver detalles <ArrowRight size={16} /></span></div>
+    </button>
+  )
+}
+
+function EventDetails({ event, onClose }) {
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', adults: 1, children: 0, dietary_notes: '', privacy_accepted: false })
+  const [status, setStatus] = useState({ loading: false, error: '', result: null })
+  const date = new Date(event.starts_at)
+  const registrationState = getRegistrationState(event)
+  const canRegister = event.registration_enabled && registrationState === 'open'
+  const adults = Number(form.adults || 0)
+  const children = Number(form.children || 0)
+  const amount = event.pricing_mode === 'adult_child'
+    ? adults * event.adult_price_cents + children * event.child_price_cents
+    : (adults + children) * event.price_cents
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (keyboardEvent) => { if (keyboardEvent.key === 'Escape') onClose() }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', closeOnEscape) }
+  }, [onClose])
+
+  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+  const submit = async (submitEvent) => {
+    submitEvent.preventDefault()
+    if (adults + children < 1) { setStatus({ loading: false, error: 'Añade al menos una persona.', result: null }); return }
+    setStatus({ loading: true, error: '', result: null })
+    try {
+      const result = await api.registerForEvent(event.id, { ...form, adults, children, attendees: adults + children })
+      setStatus({ loading: false, error: '', result })
+    } catch (error) { setStatus({ loading: false, error: error.message, result: null }) }
+  }
+
+  return (
+    <div className="event-dialog" role="dialog" aria-modal="true" aria-labelledby="event-dialog-title">
+      <button className="event-dialog__backdrop" onClick={onClose} aria-label="Cerrar detalles del evento" />
+      <section className={canRegister ? 'event-dialog__panel' : 'event-dialog__panel event-dialog__panel--details-only'}>
+        <button className="event-dialog__close" type="button" onClick={onClose} aria-label="Cerrar"><X /></button>
+        <div className="event-dialog__intro">
+          <div className="event-dialog__date"><strong>{date.toLocaleDateString('es-ES', { day: '2-digit' })}</strong><span>{date.toLocaleDateString('es-ES', { month: 'long' })}</span></div>
+          <span className="tag">{event.category}</span>
+          <h2 id="event-dialog-title">{event.title}</h2>
+          <p>{event.description}</p>
+          <div className="event-dialog__meta"><span><CalendarDays /> {date.toLocaleDateString('es-ES', { dateStyle: 'long' })}</span><span><Clock3 /> {date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span><span><MapPin /> {event.location}</span>{event.capacity && <span><Users /> {event.capacity} plazas</span>}{event.registration_enabled && event.registration_opens_at && <span><CalendarDays /> Inscripciones desde {formatRegistrationDate(event.registration_opens_at)}</span>}{event.registration_enabled && event.registration_closes_at && <span><CalendarDays /> Inscripciones hasta {formatRegistrationDate(event.registration_closes_at)}</span>}</div>
+          <div className="event-dialog__prices">
+            {event.pricing_mode === 'adult_child' ? <><div><span>Menú adulto</span><strong>{formatEventPrice(event, event.adult_price_cents)}</strong></div><div><span>Menú infantil · hasta {event.child_age_limit} años</span><strong>{formatEventPrice(event, event.child_price_cents)}</strong></div></> : <div><span>Mismo menú y precio para adultos y niños</span><strong>{event.price_cents ? formatEventPrice(event, event.price_cents) : 'Gratis'}</strong></div>}
+          </div>
+          {event.registration_enabled && registrationState !== 'open' && <div className={`event-dialog__availability ${registrationState}`}><strong>{registrationState === 'upcoming' ? 'Inscripciones todavía no abiertas' : 'Inscripciones cerradas'}</strong><span>{registrationState === 'upcoming' && event.registration_opens_at ? `El formulario estará disponible desde el ${formatRegistrationDate(event.registration_opens_at)}.` : event.registration_closes_at ? `El plazo finalizó el ${formatRegistrationDate(event.registration_closes_at)}.` : 'El formulario de inscripción ya no está disponible.'}</span></div>}
+        </div>
+        {canRegister && <div className="event-dialog__registration">
+          {status.result ? <div className="event-registration-success"><Check /><h3>Inscripción recibida</h3><p>{status.result.status === 'waitlist' ? 'Os hemos añadido a la lista de espera.' : 'La plaza queda pendiente de confirmación.'}</p>{status.result.payment_required && <strong>Importe: {formatEventPrice(event, status.result.amount_cents)}</strong>}</div> : <form onSubmit={submit}>
+            <div><p className="eyebrow">Reserva tu plaza</p><h3>Inscripción</h3></div>
+            <label>Nombre y apellidos<input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} required minLength="2" /></label>
+            <div className="event-registration-grid"><label>Email<input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required /></label><label>Teléfono<input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></label></div>
+            <div className="event-registration-grid"><label>Adultos<input type="number" min="0" max="20" value={form.adults} onChange={(e) => update('adults', e.target.value)} required /></label><label>Niños{event.pricing_mode === 'adult_child' ? ` (hasta ${event.child_age_limit} años)` : ''}<input type="number" min="0" max="20" value={form.children} onChange={(e) => update('children', e.target.value)} required /></label></div>
+            <label>Alergias o necesidades alimentarias<textarea rows="2" value={form.dietary_notes} onChange={(e) => update('dietary_notes', e.target.value)} /></label>
+            <label className="event-registration-consent"><input type="checkbox" checked={form.privacy_accepted} onChange={(e) => update('privacy_accepted', e.target.checked)} required /> Acepto el tratamiento de mis datos para gestionar esta inscripción.</label>
+            {amount > 0 && <div className="event-registration-total"><span>Total previsto</span><strong>{formatEventPrice(event, amount)}</strong></div>}
+            {status.error && <p className="form-status error" role="alert">{status.error}</p>}
+            <button className="button button--coral" disabled={status.loading}>{status.loading ? 'Enviando…' : 'Solicitar inscripción'} <ArrowRight size={17} /></button>
+          </form>}
+        </div>}
+      </section>
+    </div>
   )
 }
 
 function Events() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedEvent, setSelectedEvent] = useState(null)
   useEffect(() => { api.events().then(setEvents).catch(() => setEvents([])).finally(() => setLoading(false)) }, [])
   return (
     <section className="section events" id="eventos">
-      <div className="section-heading section-heading--ink"><div><p className="eyebrow">Próximamente</p><h2>Momentos para<br />{' '}vivir en comunidad.</h2></div><a className="inline-link" href="/gestion">Gestionar eventos <ArrowRight size={17} /></a></div>
+      <div className="section-heading section-heading--ink"><div><p className="eyebrow">Próximamente</p><h2>Momentos para<br />{' '}vivir en comunidad.</h2></div></div>
       <div className="events__grid">
         {loading && <p className="empty">Cargando próximos eventos…</p>}
         {!loading && events.length === 0 && <div className="empty-state"><CalendarDays /><h3>Pronto habrá nuevos encuentros</h3><p>Mientras tanto, te esperamos en nuestras reuniones semanales.</p></div>}
-        {events.map((event) => <EventCard key={event.id} event={event} />)}
+        {events.map((event) => <EventCard key={event.id} event={event} onSelect={setSelectedEvent} />)}
       </div>
+      {selectedEvent && <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </section>
   )
 }
@@ -258,6 +337,27 @@ function Prayer() {
   )
 }
 
+function Newsletter() {
+  const [form, setForm] = useState({ full_name: '', email: '', consent: false })
+  const [status, setStatus] = useState('idle')
+  const submit = async (event) => {
+    event.preventDefault(); setStatus('sending')
+    try { await api.subscribeNewsletter(form); setStatus('done'); setForm({ full_name: '', email: '', consent: false }) } catch { setStatus('error') }
+  }
+  return (
+    <section className="newsletter">
+      <div><p className="eyebrow eyebrow--light">Mantente cerca</p><h2>Noticias que fortalecen nuestra comunidad.</h2><p>Recibe próximos eventos, horarios especiales y novedades de la iglesia.</p></div>
+      <form onSubmit={submit}>
+        <label>Nombre <small>(opcional)</small><input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></label>
+        <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
+        <label className="newsletter__consent"><input type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} required /> Quiero recibir comunicaciones de Alcance Victoria Barcelona Norte.</label>
+        <button className="button button--coral" disabled={status === 'sending'}>{status === 'sending' ? 'Guardando…' : status === 'done' ? <><Check /> Suscripción confirmada</> : <>Quiero recibir noticias <Send size={17} /></>}</button>
+        {status === 'error' && <p className="form-error">No se pudo completar la suscripción. Inténtalo de nuevo.</p>}
+      </form>
+    </section>
+  )
+}
+
 function Visit() {
   return (
     <section className="visit" id="visitanos"><div><p className="eyebrow">Ven a conocernos</p><h2>Este domingo,<br />{' '}te esperamos.</h2></div><div><p><MapPin /> Ripollet, Barcelona</p><p><Clock3 /> Domingos · 10:00 y 12:00</p><a className="button" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=Alcance+Victoria+Barcelona+Norte+Ripollet">Cómo llegar <ArrowRight size={17} /></a></div></section>
@@ -268,40 +368,6 @@ function Footer() {
   return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, url, icon: Icon }) => <a key={name} href={url} target="_blank" rel="noreferrer" aria-label={name}><Icon /></a>)}</div><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
 }
 
-function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Visit /></main><Footer /></> }
+function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><Visit /></main><Footer /></> }
 
-function EventForm({ value, onSave, onCancel }) {
-  const [form, setForm] = useState(value || emptyEvent)
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  return (
-    <form className="event-form" onSubmit={(e) => { e.preventDefault(); onSave({ ...form, starts_at: new Date(form.starts_at).toISOString() }) }}>
-      <div className="form-title"><div><p className="eyebrow">Editor de eventos</p><h2>{form.id ? 'Editar evento' : 'Nuevo evento'}</h2></div><button type="button" className="icon-button" onClick={onCancel}><X /></button></div>
-      <label>Título<input value={form.title} onChange={(e) => update('title', e.target.value)} required minLength="3" /></label>
-      <label>Descripción<textarea value={form.description} onChange={(e) => update('description', e.target.value)} required minLength="10" rows="4" /></label>
-      <div className="form-grid"><label>Fecha y hora<input type="datetime-local" value={form.starts_at?.slice(0, 16)} onChange={(e) => update('starts_at', e.target.value)} required /></label><label>Categoría<input value={form.category} onChange={(e) => update('category', e.target.value)} required /></label></div>
-      <label>Lugar<input value={form.location} onChange={(e) => update('location', e.target.value)} required /></label>
-      <div className="checks"><label><input type="checkbox" checked={form.featured} onChange={(e) => update('featured', e.target.checked)} /> Destacado</label><label><input type="checkbox" checked={form.published} onChange={(e) => update('published', e.target.checked)} /> Publicado</label></div>
-      <button className="button">Guardar evento <Check size={17} /></button>
-    </form>
-  )
-}
-
-function Admin() {
-  const [key, setKey] = useState(() => sessionStorage.getItem('av-admin-key') || '')
-  const [events, setEvents] = useState([]), [editing, setEditing] = useState(null), [message, setMessage] = useState('')
-  const load = () => api.events(key).then(setEvents).catch((e) => setMessage(e.message))
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const save = async (event) => { try { await api.saveEvent(event, key); sessionStorage.setItem('av-admin-key', key); setEditing(null); setMessage('Evento guardado'); load() } catch (e) { setMessage(e.message) } }
-  const remove = async (id) => { if (!window.confirm('¿Eliminar este evento?')) return; try { await api.deleteEvent(id, key); load() } catch (e) { setMessage(e.message) } }
-  const sorted = useMemo(() => [...events].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)), [events])
-  return (
-    <div className="admin"><header className="admin__header"><Brand light /><a href="/">Ver web <ArrowRight size={16} /></a></header><main className="admin__main">
-      <div className="admin__top"><div><p className="eyebrow">Organización</p><h1>Gestión de eventos</h1><p>Crea y publica los próximos encuentros de la iglesia.</p></div><button className="button button--coral" onClick={() => setEditing(emptyEvent)}><Plus /> Nuevo evento</button></div>
-      <div className="admin-key"><label>Clave de gestión<input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Solo si está configurada en la API" /></label><button className="button button--small" onClick={load}>Conectar</button></div>
-      {message && <div className="notice">{message}<button onClick={() => setMessage('')}><X size={16} /></button></div>}
-      <div className="admin__list">{sorted.length === 0 && <div className="empty-state"><CalendarDays /><h3>No hay eventos todavía</h3><p>Crea el primero para mostrarlo en la web.</p></div>}{sorted.map((event) => <article key={event.id}><div className="admin-date"><strong>{new Date(event.starts_at).getDate()}</strong><span>{new Date(event.starts_at).toLocaleDateString('es-ES', { month: 'short' })}</span></div><div><div className="admin-tags"><span className="tag">{event.category}</span>{!event.published && <span className="tag tag--muted">Borrador</span>}</div><h3>{event.title}</h3><p>{event.location} · {new Date(event.starts_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}</p></div><div className="admin-actions"><button onClick={() => setEditing(event)} aria-label="Editar"><Pencil /></button><button onClick={() => remove(event.id)} aria-label="Eliminar"><Trash2 /></button></div></article>)}</div>
-    </main>{editing && <div className="modal"><div className="modal__backdrop" onClick={() => setEditing(null)} /><EventForm value={editing} onSave={save} onCancel={() => setEditing(null)} /></div>}</div>
-  )
-}
-
-export default function App() { return window.location.pathname.startsWith('/gestion') ? <Admin /> : <Home /> }
+export default function App() { return window.location.pathname.startsWith('/gestion') ? <AdminApp /> : <Home /> }
