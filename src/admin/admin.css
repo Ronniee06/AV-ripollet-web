@@ -644,13 +644,35 @@
 .roles-grid__icon { width: 46px; height: 46px; background: #eef2f4; display: grid; place-items: center; color: #09233b; }
 .role-editor__permissions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; max-height: 42vh; overflow: auto; padding: .2rem; }
 .role-editor__permissions label { border: 1px solid #e0e4e6; padding: .65rem; }
-.admin-people__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.admin-settings { display: grid; gap: 20px; }
+.admin-settings__hero { min-height: 210px; padding: clamp(26px, 4vw, 46px); display: flex; align-items: center; justify-content: space-between; gap: 28px; color: white; background: linear-gradient(125deg, var(--admin-navy) 0 72%, #153d46 72%); overflow: hidden; }
+.admin-settings__hero h2 { margin: 3px 0 10px; font-family: 'Fraunces', Georgia, serif; font-size: clamp(36px, 5vw, 60px); font-weight: 500; line-height: 1; }
+.admin-settings__hero p:last-child { max-width: 620px; margin: 0; color: rgba(255,255,255,.72); line-height: 1.55; }
+.admin-settings__hero > svg { flex: 0 0 auto; width: clamp(82px, 12vw, 150px); height: auto; color: var(--admin-coral); opacity: .9; transform: rotate(-8deg); }
+.admin-settings__group { padding: clamp(20px, 3vw, 30px); background: white; border: 1px solid var(--admin-line); }
+.admin-settings__group > header { margin-bottom: 16px; }
+.admin-settings__group > header span { color: var(--admin-coral); font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.admin-settings__group > header p { margin: 5px 0 0; color: var(--admin-muted); font-size: 13px; }
+.admin-settings-card { width: 100%; min-height: 104px; padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 16px; color: var(--admin-ink); background: var(--admin-paper); border: 1px solid transparent; text-align: left; cursor: pointer; transition: border-color .18s ease, transform .18s ease, background .18s ease; }
+.admin-settings-card:hover { background: white; border-color: var(--admin-coral); transform: translateY(-1px); }
+.admin-settings-card:focus-visible { outline: 3px solid rgba(239,109,88,.25); outline-offset: 3px; }
+.admin-settings-card__icon { width: 52px; height: 52px; display: grid; place-items: center; color: white; background: var(--admin-coral); border-radius: 50%; }
+.admin-settings-card__body { display: grid; gap: 4px; }
+.admin-settings-card__body strong { font-family: 'Fraunces', Georgia, serif; font-size: 23px; font-weight: 600; }
+.admin-settings-card__body small { color: var(--admin-muted); font-size: 12px; line-height: 1.45; }
+.admin-settings-card__status { min-width: 66px; display: grid; justify-items: end; color: var(--admin-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+.admin-settings-card__status b { color: var(--admin-navy); font-family: 'Fraunces', Georgia, serif; font-size: 27px; line-height: 1; }
+.admin-settings__note { padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; color: var(--admin-navy); background: var(--admin-sky); border-left: 4px solid var(--admin-navy-soft); }
+.admin-settings__note > svg { width: 24px; }
+.admin-settings__note > svg:last-child { color: var(--admin-navy-soft); opacity: .45; }
+.admin-settings__note p { margin: 3px 0 0; color: var(--admin-muted); font-size: 12px; line-height: 1.5; }
 .admin-church-manager { width: min(880px, 100%); overflow-y: auto; }
 .admin-church-manager > header { align-items: flex-start; }
 .admin-church-manager > header p:last-child { margin: .35rem 0 0; color: var(--admin-muted); }
 .admin-church-form { padding: 1rem; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: end; gap: .7rem; background: var(--admin-paper); }
 .admin-church-form__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; grid-column: 1 / -1; }
 .admin-church-form .admin-error { grid-column: 1 / -1; margin: 0; }
+.admin-church-readonly { margin: 0; padding: .85rem 1rem; color: var(--admin-muted); background: var(--admin-paper); border-left: 4px solid var(--admin-navy-soft); font-size: 12px; line-height: 1.5; }
 .admin-church-list { display: grid; gap: .55rem; max-height: 42vh; overflow-y: auto; }
 .admin-church-list article { padding: .85rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .8rem; border: 1px solid var(--admin-line); }
 .admin-church-list article.is-disabled { opacity: .55; background: var(--admin-paper); }
@@ -669,8 +691,18 @@
   .welcome-grid > article > div:nth-child(2), .roles-grid > article > div:nth-child(2) { min-width: 0; }
   .welcome-grid p, .welcome-grid small, .welcome-grid span, .roles-grid p, .roles-grid span { overflow-wrap: anywhere; }
   .role-editor__permissions { grid-template-columns: 1fr; }
-  .admin-people__actions { width: 100%; }
-  .admin-people__actions .admin-primary, .admin-people__actions .admin-secondary { flex: 1 1 100%; }
+  .admin-settings__hero { min-height: 0; padding: 28px 20px; }
+  .admin-settings__hero > svg { display: none; }
+  .admin-settings__hero h2 { font-size: 42px; }
+  .admin-settings__group { padding: 16px 12px; }
+  .admin-settings-card { padding: 15px 12px; grid-template-columns: auto minmax(0, 1fr) auto; gap: 11px; }
+  .admin-settings-card__icon { width: 44px; height: 44px; }
+  .admin-settings-card__body strong { font-size: 20px; }
+  .admin-settings-card__status { grid-column: 2; justify-items: start; display: flex; align-items: baseline; gap: 5px; }
+  .admin-settings-card__status b { font-size: 21px; }
+  .admin-settings-card > svg { grid-column: 3; grid-row: 1 / span 2; }
+  .admin-settings__note { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .admin-settings__note > svg:last-child { display: none; }
   .admin-church-form { grid-template-columns: 1fr; }
   .admin-church-form__actions, .admin-church-form .admin-error { grid-column: 1; }
   .admin-church-list article { grid-template-columns: auto minmax(0, 1fr); }

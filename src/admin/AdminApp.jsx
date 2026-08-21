@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, Bus, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardList, ContactRound, CreditCard, Eye, EyeOff, FileClock, Images,
-  Heart, KeyRound, LayoutDashboard, LogOut, Mail, Menu, Pencil, Plus, ShieldCheck, Trash2, Users, X,
+  Heart, KeyRound, LayoutDashboard, LogOut, Mail, Menu, Pencil, Plus, Settings2, ShieldCheck, Trash2, Users, X,
   TableProperties, UserCheck,
 } from 'lucide-react'
 import { api } from '../api'
@@ -10,6 +10,7 @@ import { PeopleAdmin } from './PeopleAdmin'
 import { NewsletterAdmin } from './NewsletterAdmin'
 import { PrayerAdmin } from './PrayerAdmin'
 import { RolesAdmin } from './RolesAdmin'
+import { SettingsAdmin } from './SettingsAdmin'
 import { WelcomeAdmin } from './WelcomeAdmin'
 import './admin.css'
 
@@ -23,16 +24,16 @@ const roleLabels = {
 
 const permissionScreens = [
   ['overview', 'Resumen'], ['events', 'Eventos'], ['registrations', 'Inscripciones'], ['people', 'Personas'], ['welcome', 'Bienvenidas'],
-  ['prayer', 'Oración'], ['photos', 'Fotos'], ['users', 'Usuarios'], ['roles', 'Roles'], ['newsletter', 'Newsletter'], ['audit', 'Auditoría'],
+  ['prayer', 'Oración'], ['photos', 'Fotos'], ['users', 'Usuarios'], ['roles', 'Roles'], ['newsletter', 'Newsletter'], ['settings', 'Configuración'], ['audit', 'Auditoría'],
 ]
 const permissionLevelLabels = { none: 'Sin acceso', view: 'Solo ver', manage: 'Administrar' }
 const permissionRank = { none: 0, view: 1, manage: 2 }
 const rolePermissionFallback = {
   developer: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
   admin: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
-  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', welcome: 'none', prayer: 'view', photos: 'manage', users: 'none', roles: 'none', newsletter: 'none', audit: 'none' },
-  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', welcome: 'none', prayer: 'manage', photos: 'view', users: 'none', roles: 'none', newsletter: 'manage', audit: 'none' },
-  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', welcome: 'none', prayer: 'none', photos: 'view', users: 'none', roles: 'none', newsletter: 'view', audit: 'none' },
+  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', welcome: 'none', prayer: 'view', photos: 'manage', users: 'none', roles: 'none', newsletter: 'none', settings: 'none', audit: 'none' },
+  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', welcome: 'none', prayer: 'manage', photos: 'view', users: 'none', roles: 'none', newsletter: 'manage', settings: 'none', audit: 'none' },
+  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', welcome: 'none', prayer: 'none', photos: 'view', users: 'none', roles: 'none', newsletter: 'view', settings: 'none', audit: 'none' },
 }
 
 function hasScreenAccess(profile, screen, required = 'view') {
@@ -705,6 +706,7 @@ export function AdminApp() {
   const canManageNewsletter = hasScreenAccess(user, 'newsletter', 'manage')
   const canViewRegistrations = hasScreenAccess(user, 'registrations')
   const canManagePeople = hasScreenAccess(user, 'people', 'manage')
+  const canManageSettings = hasScreenAccess(user, 'settings', 'manage')
 
   const loadData = async (profile) => {
     const safe = async (promise, fallback = []) => { try { return await promise } catch (error) { if (error.status === 401) throw error; return fallback } }
@@ -713,7 +715,7 @@ export function AdminApp() {
       hasScreenAccess(profile, 'events') ? safe(api.adminEvents()) : [],
       hasScreenAccess(profile, 'registrations') ? safe(api.registrations()) : [],
       hasScreenAccess(profile, 'people') ? safe(api.people()) : [],
-      hasScreenAccess(profile, 'people') ? safe(api.adminChurches()) : hasScreenAccess(profile, 'registrations') ? safe(api.churches()) : [],
+      hasScreenAccess(profile, 'settings') ? safe(api.adminChurches()) : (hasScreenAccess(profile, 'people') || hasScreenAccess(profile, 'registrations')) ? safe(api.churches()) : [],
       hasScreenAccess(profile, 'prayer') ? safe(api.prayerRequests()) : [],
       hasScreenAccess(profile, 'users') ? safe(api.users()) : [],
       hasScreenAccess(profile, 'roles') ? safe(api.roles()) : hasScreenAccess(profile, 'users') ? safe(api.userRoleOptions()) : [],
@@ -853,6 +855,7 @@ export function AdminApp() {
   const switchSection = (next) => {
     setSection(next); setEventManagementId(null); setNavOpen(false)
     if (next === 'people') reloadPeople().catch((error) => setNotice(error.message))
+    if (next === 'settings') reloadChurches().catch((error) => setNotice(error.message))
   }
 
   const metrics = useMemo(() => ({
@@ -870,7 +873,7 @@ export function AdminApp() {
     ['overview', LayoutDashboard, 'Resumen'], ['events', CalendarDays, 'Eventos'],
     ['registrations', ClipboardList, 'Inscripciones'], ['people', ContactRound, 'Personas'], ['welcome', UserCheck, 'Bienvenidas'], ['prayer', Heart, 'Oración'], ['photos', Images, 'Fotos'],
     ['users', Users, 'Usuarios'], ['roles', ShieldCheck, 'Roles'],
-    ['newsletter', Mail, 'Newsletter'],
+    ['newsletter', Mail, 'Newsletter'], ['settings', Settings2, 'Configuración'],
     ['audit', FileClock, 'Auditoría'],
   ].filter(([key]) => hasScreenAccess(user, key))
 
@@ -916,7 +919,7 @@ export function AdminApp() {
           <div className="admin-table-wrap"><table><thead><tr><th>Persona</th><th>Evento</th><th>Plazas</th><th>Adultos / niños</th><th>Menús A / N</th><th>Estado</th><th>Pago</th><th>Acciones</th></tr></thead><tbody>{registrations.map((item) => <tr key={item.id}><td><strong>{item.full_name}</strong><small>{item.email || item.phone || 'Sin contacto'}</small></td><td>{item.event_title}</td><td>{item.attendees}</td><td>{item.adults ?? item.attendees} / {item.children ?? 0}</td><td>{item.adult_menus ?? 0} / {item.child_menus ?? 0}</td><td><span className={`admin-status ${item.status}`}>{registrationStatusLabels[item.status] || item.status}</span></td><td>{paymentStatusLabels[item.payment_status] || item.payment_status}</td><td>{canManageRegistrations && <div className="admin-inline-actions"><button onClick={() => updateRegistration(item.id, { status: 'confirmed' })}>Confirmar</button>{item.payment_status === 'pending' && <button onClick={() => updateRegistration(item.id, { payment_status: 'paid' })}>Marcar pagado</button>}</div>}</td></tr>)}</tbody></table></div>
         </section>}
 
-        {section === 'people' && <PeopleAdmin people={people} events={events} churches={churches} canManage={canManagePeople} reload={reloadPeople} reloadChurches={reloadChurches} notify={setNotice} />}
+        {section === 'people' && <PeopleAdmin people={people} events={events} churches={churches} canManage={canManagePeople} reload={reloadPeople} notify={setNotice} />}
 
         {section === 'welcome' && <WelcomeAdmin canManage={hasScreenAccess(user, 'welcome', 'manage')} notify={setNotice} />}
 
@@ -941,6 +944,8 @@ export function AdminApp() {
         {section === 'newsletter' && <NewsletterAdmin subscribers={subscribers} campaigns={campaigns} provider={newsletterProvider} canManage={canManageNewsletter} reload={reloadNewsletter} notify={setNotice} />}
 
         {section === 'roles' && <RolesAdmin roles={roles} screens={permissionScreens} currentUser={user} canManage={user.role === 'developer'} reload={reloadRoles} notify={setNotice} />}
+
+        {section === 'settings' && <SettingsAdmin churches={churches} canManage={canManageSettings} reloadChurches={reloadChurches} notify={setNotice} />}
 
         {section === 'audit' && <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">Seguridad</p><h2>Auditoría</h2><p>Registro de accesos y cambios administrativos.</p></div></div><div className="admin-audit-list">{audit.map((item) => <article key={item.id}><FileClock /><div><strong>{item.action} · {item.entity_type}</strong><span>{item.user_email || 'Sistema'} · {new Date(item.created_at).toLocaleString('es-ES')}</span></div></article>)}</div></section>}
       </main>

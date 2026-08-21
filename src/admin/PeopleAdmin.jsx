@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Building2, CalendarDays, Church, Mail, MapPin, Pencil, Phone, Plus, Search, UserRound, UsersRound, X } from 'lucide-react'
+import { Building2, CalendarDays, Mail, MapPin, Pencil, Phone, Plus, Search, UserRound, UsersRound, X } from 'lucide-react'
 import { api } from '../api'
 import { buildChurchOptions, churchLabel, personTypeLabel, personTypeOptions } from '../churches'
-import { ChurchesManager } from './ChurchesManager'
 
 const emptyPerson = {
   full_name: '', email: '', phone: '', person_type: 'unknown', church_affiliation: 'unknown',
@@ -53,13 +52,12 @@ function PersonEditor({ person, churchOptions, onClose, onSaved, notify }) {
   </div>
 }
 
-export function PeopleAdmin({ people, events, churches, canManage, reload, reloadChurches, notify }) {
+export function PeopleAdmin({ people, events, churches, canManage, reload, notify }) {
   const [search, setSearch] = useState('')
   const [type, setType] = useState('all')
   const [church, setChurch] = useState('all')
   const [eventId, setEventId] = useState('all')
   const [editor, setEditor] = useState(null)
-  const [churchManagerOpen, setChurchManagerOpen] = useState(false)
   const churchOptions = useMemo(() => buildChurchOptions(churches), [churches])
 
   const filtered = useMemo(() => {
@@ -80,7 +78,7 @@ export function PeopleAdmin({ people, events, churches, canManage, reload, reloa
   return <section className="admin-people">
     <div className="admin-people__hero">
       <div><p className="admin-kicker">Comunidad</p><h2>Personas</h2><p>Una ficha por persona, con su procedencia y los eventos en los que ha participado.</p></div>
-      {canManage && <div className="admin-people__actions"><button className="admin-secondary" onClick={() => setChurchManagerOpen(true)}><Church size={18} /> Gestionar iglesias</button><button className="admin-primary" onClick={() => setEditor({ mode: 'new' })}><Plus size={18} /> Añadir persona</button></div>}
+      {canManage && <button className="admin-primary" onClick={() => setEditor({ mode: 'new' })}><Plus size={18} /> Añadir persona</button>}
       <div className="admin-people__counts"><span><strong>{people.length}</strong> contactos</span><span><strong>{avPeople}</strong> de AV</span><span><strong>{guests}</strong> invitados</span></div>
     </div>
 
@@ -101,6 +99,5 @@ export function PeopleAdmin({ people, events, churches, canManage, reload, reloa
     </article>)}</div>}
 
     {editor && <PersonEditor person={editor.mode === 'new' ? null : editor} churchOptions={churchOptions} onClose={() => setEditor(null)} onSaved={reload} notify={notify} />}
-    {churchManagerOpen && <ChurchesManager churches={churches} onClose={() => setChurchManagerOpen(false)} onChanged={reloadChurches} notify={notify} />}
   </section>
 }
