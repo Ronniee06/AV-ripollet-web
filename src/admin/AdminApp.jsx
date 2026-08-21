@@ -905,7 +905,7 @@ export function AdminApp() {
 
         {section === 'newsletter' && <NewsletterAdmin subscribers={subscribers} campaigns={campaigns} provider={newsletterProvider} canManage={canManageNewsletter} reload={reloadNewsletter} notify={setNotice} />}
 
-        {section === 'roles' && <RolesAdmin roles={roles} screens={permissionScreens} currentUser={user} reload={reloadRoles} notify={setNotice} />}
+        {section === 'roles' && <RolesAdmin roles={roles} screens={permissionScreens} currentUser={user} canManage={user.role === 'developer'} reload={reloadRoles} notify={setNotice} />}
 
         {section === 'audit' && <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">Seguridad</p><h2>Auditoría</h2><p>Registro de accesos y cambios administrativos.</p></div></div><div className="admin-audit-list">{audit.map((item) => <article key={item.id}><FileClock /><div><strong>{item.action} · {item.entity_type}</strong><span>{item.user_email || 'Sistema'} · {new Date(item.created_at).toLocaleString('es-ES')}</span></div></article>)}</div></section>}
       </main>
