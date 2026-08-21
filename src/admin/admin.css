@@ -574,3 +574,33 @@
   .admin-login__slide.is-active > img { transform: none; }
   .admin-login__logo-track { animation: none; }
 }
+.admin-user-grid > article.is-disabled { opacity: .72; background: #f7f8f8; }
+.admin-user-toggle { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; }
+.admin-user-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.admin-user-toggle span { width: 42px; height: 24px; border-radius: 999px; background: #c8ced2; display: grid; align-items: center; padding: 2px; transition: .2s ease; }
+.admin-user-toggle span::after { content: ''; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(7, 24, 43, .25); transition: transform .2s ease; }
+.admin-user-toggle input:checked + span { background: #1f8a63; }
+.admin-user-toggle input:checked + span::after { transform: translateX(18px); }
+.admin-user-toggle input:focus-visible + span { outline: 3px solid rgba(31, 138, 99, .25); outline-offset: 2px; }
+.admin-user-toggle b { font-size: .72rem; letter-spacing: .08em; }
+
+.admin-search { max-width: 520px; display: flex; align-items: center; gap: .65rem; border: 1px solid #d9dfe2; padding: .2rem .8rem; background: white; }
+.admin-search input { border: 0; width: 100%; outline: 0; }
+.welcome-grid, .roles-grid { display: grid; gap: .8rem; margin-top: 1.25rem; }
+.welcome-grid > article, .roles-grid > article { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; border: 1px solid #e0e4e6; padding: 1rem; background: #fff; }
+.welcome-grid h3, .roles-grid h3 { margin: 0 0 .25rem; }
+.welcome-grid p, .roles-grid p { margin: 0; color: #66737d; }
+.welcome-grid small, .roles-grid span { display: block; margin-top: .35rem; color: #80909a; }
+.welcome-count { width: 68px; aspect-ratio: 1; border-radius: 50%; background: #e8f4ee; display: grid; place-content: center; text-align: center; color: #176c4d; }
+.welcome-count strong { font: 700 1.45rem/1 Georgia, serif; }
+.welcome-count span { font-size: .7rem; }
+.welcome-notes { display: block; margin-top: .5rem; font-size: .82rem; }
+.roles-grid__icon { width: 46px; height: 46px; background: #eef2f4; display: grid; place-items: center; color: #09233b; }
+.role-editor__permissions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; max-height: 42vh; overflow: auto; padding: .2rem; }
+.role-editor__permissions label { border: 1px solid #e0e4e6; padding: .65rem; }
+
+@media (max-width: 680px) {
+  .welcome-grid > article, .roles-grid > article { grid-template-columns: auto 1fr; }
+  .welcome-grid > article > button, .roles-grid > article > .admin-inline-actions { grid-column: 1 / -1; }
+  .role-editor__permissions { grid-template-columns: 1fr; }
+}

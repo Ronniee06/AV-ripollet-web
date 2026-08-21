@@ -9,6 +9,8 @@ import { churchOptions } from '../churches'
 import { PeopleAdmin } from './PeopleAdmin'
 import { NewsletterAdmin } from './NewsletterAdmin'
 import { PrayerAdmin } from './PrayerAdmin'
+import { RolesAdmin } from './RolesAdmin'
+import { WelcomeAdmin } from './WelcomeAdmin'
 import './admin.css'
 
 const roleLabels = {
@@ -20,7 +22,7 @@ const roleLabels = {
 }
 
 const permissionScreens = [
-  ['overview', 'Resumen'], ['events', 'Eventos'], ['registrations', 'Inscripciones'], ['people', 'Personas'],
+  ['overview', 'Resumen'], ['events', 'Eventos'], ['registrations', 'Inscripciones'], ['people', 'Personas'], ['welcome', 'Bienvenidas'],
   ['prayer', 'Oración'], ['photos', 'Fotos'], ['users', 'Usuarios'], ['newsletter', 'Newsletter'], ['audit', 'Auditoría'],
 ]
 const permissionLevelLabels = { none: 'Sin acceso', view: 'Solo ver', manage: 'Administrar' }
@@ -28,9 +30,9 @@ const permissionRank = { none: 0, view: 1, manage: 2 }
 const rolePermissionFallback = {
   developer: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
   admin: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
-  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', prayer: 'view', photos: 'manage', users: 'none', newsletter: 'none', audit: 'none' },
-  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', prayer: 'manage', photos: 'view', users: 'none', newsletter: 'manage', audit: 'none' },
-  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', prayer: 'none', photos: 'view', users: 'none', newsletter: 'view', audit: 'none' },
+  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', welcome: 'none', prayer: 'view', photos: 'manage', users: 'none', newsletter: 'none', audit: 'none' },
+  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', welcome: 'none', prayer: 'manage', photos: 'view', users: 'none', newsletter: 'manage', audit: 'none' },
+  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', welcome: 'none', prayer: 'none', photos: 'view', users: 'none', newsletter: 'view', audit: 'none' },
 }
 
 function hasScreenAccess(profile, screen, required = 'view') {
@@ -478,12 +480,11 @@ function EventEditor({ value, onSave, onClose }) {
   )
 }
 
-function UserEditor({ currentUser, onSave, onClose }) {
-  const [form, setForm] = useState(emptyUser)
+function UserEditor({ currentUser, roles, onSave, onClose }) {
+  const availableRoles = roles.filter((role) => currentUser.role === 'developer' || role.base_role !== 'admin')
+  const initialRole = availableRoles.find((role) => role.base_role === 'event_manager') || availableRoles[0]
+  const [form, setForm] = useState({ ...emptyUser, role: initialRole?.base_role || 'viewer', role_template_id: initialRole?.id })
   const update = (key, next) => setForm((current) => ({ ...current, [key]: next }))
-  const allowedRoles = currentUser.role === 'developer'
-    ? ['admin', 'event_manager', 'communications', 'viewer']
-    : ['event_manager', 'communications', 'viewer']
 
   return (
     <div className="admin-modal" role="presentation">
@@ -493,7 +494,7 @@ function UserEditor({ currentUser, onSave, onClose }) {
         <label>Nombre completo<input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} required minLength="2" /></label>
         <label>Email<input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required /></label>
         <PasswordInput label="Contraseña temporal" value={form.password} onChange={(value) => update('password', value)} autoComplete="new-password" helper="Mínimo 12 caracteres. El usuario tendrá que cambiarla al iniciar sesión." />
-        <label>Rol<select value={form.role} onChange={(e) => update('role', e.target.value)}>{allowedRoles.map((role) => <option key={role} value={role}>{roleLabels[role]}</option>)}</select></label>
+        <label>Rol<select value={form.role_template_id || ''} onChange={(e) => { const selected = availableRoles.find((role) => role.id === Number(e.target.value)); setForm((current) => ({ ...current, role_template_id: selected.id, role: selected.base_role })) }}>{availableRoles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>
         <footer><button type="button" className="admin-secondary" onClick={onClose}>Cancelar</button><button className="admin-primary">Crear usuario</button></footer>
       </form>
     </div>
@@ -683,6 +684,7 @@ export function AdminApp() {
   const [people, setPeople] = useState([])
   const [prayerRequests, setPrayerRequests] = useState([])
   const [users, setUsers] = useState([])
+  const [roles, setRoles] = useState([])
   const [subscribers, setSubscribers] = useState([])
   const [campaigns, setCampaigns] = useState([])
   const [newsletterProvider, setNewsletterProvider] = useState(null)
@@ -703,21 +705,24 @@ export function AdminApp() {
   const canManagePeople = hasScreenAccess(user, 'people', 'manage')
 
   const loadData = async (profile) => {
-    const safe = async (promise, fallback = []) => { try { return await promise } catch { return fallback } }
+    const safe = async (promise, fallback = []) => { try { return await promise } catch (error) { if (error.status === 401) throw error; return fallback } }
     const canReadNewsletter = hasScreenAccess(profile, 'newsletter')
-    const [eventData, registrationData, peopleData, prayerData, userData, subscriberData, campaignData, providerData, auditData] = await Promise.all([
+    const [eventData, registrationData, peopleData, prayerData, userData, roleData, subscriberData, campaignData, providerData, auditData] = await Promise.all([
       hasScreenAccess(profile, 'events') ? safe(api.adminEvents()) : [],
       hasScreenAccess(profile, 'registrations') ? safe(api.registrations()) : [],
       hasScreenAccess(profile, 'people') ? safe(api.people()) : [],
       hasScreenAccess(profile, 'prayer') ? safe(api.prayerRequests()) : [],
       hasScreenAccess(profile, 'users') ? safe(api.users()) : [],
+      hasScreenAccess(profile, 'users') ? safe(api.roles()) : [],
       canReadNewsletter ? safe(api.newsletterSubscribers()) : [],
       canReadNewsletter ? safe(api.newsletterCampaigns()) : [],
       canReadNewsletter ? safe(api.newsletterProviderStatus(), {}) : {},
       hasScreenAccess(profile, 'audit') ? safe(api.audit()) : [],
     ])
-    setEvents(eventData); setRegistrations(registrationData); setPeople(peopleData); setPrayerRequests(prayerData); setUsers(userData); setSubscribers(subscriberData); setCampaigns(campaignData); setNewsletterProvider(providerData); setAudit(auditData)
+    setEvents(eventData); setRegistrations(registrationData); setPeople(peopleData); setPrayerRequests(prayerData); setUsers(userData); setRoles(roleData); setSubscribers(subscriberData); setCampaigns(campaignData); setNewsletterProvider(providerData); setAudit(auditData)
   }
+
+  const reloadRoles = async () => setRoles(await api.roles())
 
   const reloadPeople = async () => setPeople(await api.people())
   const reloadPrayer = async () => setPrayerRequests(await api.prayerRequests())
@@ -731,6 +736,12 @@ export function AdminApp() {
 
   useEffect(() => {
     api.me().then((profile) => { setUser(profile); setSection((current) => allowedSection(profile, current)); return profile.must_change_password ? undefined : loadData(profile) }).catch(() => setUser(null)).finally(() => setChecking(false))
+  }, [])
+
+  useEffect(() => {
+    const expired = (event) => { setUser(null); setNotice(event.detail || 'Tu sesión ha caducado. Inicia sesión de nuevo.') }
+    window.addEventListener('av:session-expired', expired)
+    return () => window.removeEventListener('av:session-expired', expired)
   }, [])
 
   useEffect(() => {
@@ -755,9 +766,9 @@ export function AdminApp() {
     try { await api.createUser(payload); setUsers(await api.users()); setUserEditor(false); setNotice('Usuario creado') } catch (error) { setNotice(error.message) }
   }
 
-  const deactivateUser = async (id) => {
-    if (!window.confirm('Este usuario perderá el acceso y se cerrarán sus sesiones. ¿Continuar?')) return
-    try { await api.deleteUser(id); setUsers(await api.users()); setNotice('Usuario desactivado') } catch (error) { setNotice(error.message) }
+  const permanentlyDeleteUser = async (id) => {
+    if (!window.confirm('Esta eliminación es definitiva y no se puede deshacer. ¿Continuar?')) return
+    try { await api.deleteUser(id); setUsers(await api.users()); setNotice('Usuario eliminado definitivamente') } catch (error) { setNotice(error.message) }
   }
 
   const updateUser = async (id, changes) => {
@@ -822,11 +833,11 @@ export function AdminApp() {
 
   const navigation = [
     ['overview', LayoutDashboard, 'Resumen'], ['events', CalendarDays, 'Eventos'],
-    ['registrations', ClipboardList, 'Inscripciones'], ['people', ContactRound, 'Personas'], ['prayer', Heart, 'Oración'], ['photos', Images, 'Fotos'],
-    ['users', Users, 'Usuarios'],
+    ['registrations', ClipboardList, 'Inscripciones'], ['people', ContactRound, 'Personas'], ['welcome', UserCheck, 'Bienvenidas'], ['prayer', Heart, 'Oración'], ['photos', Images, 'Fotos'],
+    ['users', Users, 'Usuarios'], ['roles', ShieldCheck, 'Roles'],
     ['newsletter', Mail, 'Newsletter'],
     ['audit', FileClock, 'Auditoría'],
-  ].filter(([key]) => hasScreenAccess(user, key))
+  ].filter(([key]) => hasScreenAccess(user, key === 'roles' ? 'users' : key))
 
   return (
     <div className="admin-shell">
@@ -835,7 +846,7 @@ export function AdminApp() {
       <aside className={navOpen ? 'admin-sidebar is-open' : 'admin-sidebar'}>
         <header><img src="/brand/av-barcelona-norte.png" alt="Alcance Victoria Barcelona Norte" /><button className="admin-sidebar__close" onClick={() => setNavOpen(false)} aria-label="Cerrar"><X /></button></header>
         <nav>{navigation.map(([key, Icon, label]) => <button key={key} className={section === key ? 'active' : ''} onClick={() => switchSection(key)}><Icon size={18} /> {label}</button>)}</nav>
-        <footer><div><strong>{user.full_name}</strong><span>{roleLabels[user.role]}</span></div><button onClick={() => setPasswordEditor(true)} aria-label="Abrir mi cuenta y cambiar contraseña" title="Mi cuenta"><KeyRound size={18} /></button><button onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={18} /></button></footer>
+        <footer><div><strong>{user.full_name}</strong><span>{user.role_name || roleLabels[user.role]}</span></div><button onClick={() => setPasswordEditor(true)} aria-label="Abrir mi cuenta y cambiar contraseña" title="Mi cuenta"><KeyRound size={18} /></button><button onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={18} /></button></footer>
       </aside>
 
       <main className="admin-content">
@@ -872,23 +883,35 @@ export function AdminApp() {
 
         {section === 'people' && <PeopleAdmin people={people} events={events} canManage={canManagePeople} reload={reloadPeople} notify={setNotice} />}
 
+        {section === 'welcome' && <WelcomeAdmin canManage={hasScreenAccess(user, 'welcome', 'manage')} notify={setNotice} />}
+
         {section === 'prayer' && <PrayerAdmin requests={prayerRequests} canManage={hasScreenAccess(user, 'prayer', 'manage')} reload={reloadPrayer} notify={setNotice} />}
 
         {section === 'photos' && <section className="admin-empty-module"><Images /><h2>Galerías por evento</h2><p>La base de datos ya relaciona fotos, eventos e inscripciones. La subida de archivos se conectará cuando se decida el almacenamiento definitivo.</p></section>}
 
-        {section === 'users' && <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">Accesos</p><h2>Usuarios y directivas</h2><p>Decide qué puede ver o administrar cada persona en cada pantalla.</p></div>{canManageUsers && <button className="admin-primary" onClick={() => setUserEditor(true)}><Plus size={18} /> Nuevo usuario</button>}</div><div className="admin-user-grid">{users.map((item) => {
+        {section === 'users' && <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">Accesos</p><h2>Usuarios y directivas</h2><p>Activa o pausa accesos. La eliminación definitiva solo aparece cuando el usuario está desactivado.</p></div>{canManageUsers && <button className="admin-primary" onClick={() => setUserEditor(true)}><Plus size={18} /> Nuevo usuario</button>}</div><div className="admin-user-grid">{users.map((item) => {
           const canEditTarget = canManageUsers && item.id !== user.id && (user.role === 'developer' || !['developer', 'admin'].includes(item.role))
-          const assignableRoles = user.role === 'developer' ? ['admin', 'event_manager', 'communications', 'viewer'] : ['event_manager', 'communications', 'viewer']
-          return <article key={item.id}><div className="admin-avatar">{item.full_name.slice(0, 2).toUpperCase()}</div><div><h3>{item.full_name}</h3><p>{item.email}</p>{canEditTarget ? <label className="admin-role-select"><ShieldCheck size={14} /><select value={item.role} onChange={(event) => updateUser(item.id, { role: event.target.value })} aria-label={`Rol de ${item.full_name}`}>{assignableRoles.map((role) => <option key={role} value={role}>{roleLabels[role]}</option>)}</select></label> : <span className="admin-role"><ShieldCheck size={14} /> {roleLabels[item.role]}</span>}{item.must_change_password && <span className="admin-password-pending"><KeyRound size={13} /> Cambio pendiente</span>}</div><div className="admin-user-state"><span className={item.active ? 'active' : 'inactive'}>{item.active ? 'Activo' : 'Inactivo'}</span>{canEditTarget && <button className="admin-icon" onClick={() => setPasswordResetUser(item)} aria-label={`Restablecer contraseña de ${item.full_name}`} title="Restablecer contraseña"><KeyRound /></button>}{canEditTarget && (item.active ? <button className="admin-icon danger" onClick={() => deactivateUser(item.id)} aria-label="Desactivar"><Trash2 /></button> : <button className="admin-secondary admin-reactivate" onClick={() => updateUser(item.id, { active: true })}>Reactivar</button>)}</div><div className="admin-user-permissions"><div className="admin-user-permissions__heading"><strong>Directivas por pantalla</strong><span>{item.role === 'developer' ? 'Acceso total protegido' : canEditTarget ? 'Los cambios se aplican al instante' : 'Solo lectura'}</span></div><div className="admin-user-permissions__grid">{permissionScreens.map(([screen, label]) => <label key={screen}><span>{label}</span><select value={item.permissions?.[screen] || rolePermissionFallback[item.role]?.[screen] || 'none'} disabled={!canEditTarget || item.role === 'developer'} onChange={(event) => updateUserPermissions(item.id, { [screen]: event.target.value })} aria-label={`${label} para ${item.full_name}`}>{Object.entries(permissionLevelLabels).map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>)}</div></div></article>
+          const assignableRoles = roles.filter((role) => user.role === 'developer' || role.base_role !== 'admin')
+          return <article key={item.id} className={!item.active ? 'is-disabled' : ''}>
+            <div className="admin-avatar">{item.full_name.slice(0, 2).toUpperCase()}</div>
+            <div><h3>{item.full_name}</h3><p>{item.email}</p>
+              {canEditTarget ? <label className="admin-role-select"><ShieldCheck size={14} /><select value={item.permissions_custom ? 'custom' : (item.role_template_id || '')} onChange={(event) => updateUser(item.id, { role_template_id: Number(event.target.value) })} aria-label={`Rol de ${item.full_name}`}>{item.permissions_custom && <option value="custom" disabled>Personalizado</option>}{assignableRoles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label> : <span className="admin-role"><ShieldCheck size={14} /> {item.role_name || roleLabels[item.role]}</span>}
+              {item.must_change_password && <span className="admin-password-pending"><KeyRound size={13} /> Cambio pendiente</span>}
+            </div>
+            <div className="admin-user-state"><label className="admin-user-toggle"><input type="checkbox" checked={item.active} disabled={!canEditTarget} onChange={(event) => updateUser(item.id, { active: event.target.checked })} /><span aria-hidden="true" /><b>{item.active ? 'ON' : 'OFF'}</b></label>{canEditTarget && <button className="admin-icon" onClick={() => setPasswordResetUser(item)} aria-label={`Restablecer contraseña de ${item.full_name}`} title="Restablecer contraseña"><KeyRound /></button>}{canEditTarget && !item.active && user.role === 'developer' && <button className="admin-icon danger" onClick={() => permanentlyDeleteUser(item.id)} aria-label={`Eliminar definitivamente a ${item.full_name}`} title="Eliminar definitivamente"><Trash2 /></button>}</div>
+            <div className="admin-user-permissions"><div className="admin-user-permissions__heading"><strong>Directivas por pantalla</strong><span>{item.role === 'developer' ? 'Acceso total protegido' : item.permissions_custom ? 'Rol PERSONALIZADO' : canEditTarget ? 'Cambiar una directiva lo convertirá en Personalizado' : 'Solo lectura'}</span></div><div className="admin-user-permissions__grid">{permissionScreens.map(([screen, label]) => <label key={screen}><span>{label}</span><select value={item.permissions?.[screen] || rolePermissionFallback[item.role]?.[screen] || 'none'} disabled={!canEditTarget || item.role === 'developer'} onChange={(event) => updateUserPermissions(item.id, { [screen]: event.target.value })} aria-label={`${label} para ${item.full_name}`}>{Object.entries(permissionLevelLabels).map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>)}</div></div>
+          </article>
         })}</div></section>}
 
         {section === 'newsletter' && <NewsletterAdmin subscribers={subscribers} campaigns={campaigns} provider={newsletterProvider} canManage={canManageNewsletter} reload={reloadNewsletter} notify={setNotice} />}
+
+        {section === 'roles' && <RolesAdmin roles={roles} screens={permissionScreens} currentUser={user} reload={reloadRoles} notify={setNotice} />}
 
         {section === 'audit' && <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">Seguridad</p><h2>Auditoría</h2><p>Registro de accesos y cambios administrativos.</p></div></div><div className="admin-audit-list">{audit.map((item) => <article key={item.id}><FileClock /><div><strong>{item.action} · {item.entity_type}</strong><span>{item.user_email || 'Sistema'} · {new Date(item.created_at).toLocaleString('es-ES')}</span></div></article>)}</div></section>}
       </main>
 
       {eventEditor && <EventEditor value={eventEditor.id ? eventEditor : null} onSave={saveEvent} onClose={() => setEventEditor(null)} />}
-      {userEditor && <UserEditor currentUser={user} onSave={createUser} onClose={() => setUserEditor(false)} />}
+      {userEditor && <UserEditor currentUser={user} roles={roles} onSave={createUser} onClose={() => setUserEditor(false)} />}
       {registrationEditor && <RegistrationEditor events={events} onSave={createRegistration} onClose={() => setRegistrationEditor(false)} />}
       {passwordEditor && <PasswordEditor onSave={changeOwnPassword} onClose={() => setPasswordEditor(false)} />}
       {passwordResetUser && <PasswordEditor target={passwordResetUser} onSave={resetUserPassword} onClose={() => setPasswordResetUser(null)} />}

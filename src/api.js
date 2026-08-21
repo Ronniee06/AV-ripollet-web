@@ -35,8 +35,13 @@ async function request(path, options = {}) {
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
-    if (response.status === 401) sessionStorage.removeItem(CSRF_KEY)
-    throw new Error(getErrorMessage(data))
+    const error = new Error(getErrorMessage(data))
+    error.status = response.status
+    if (response.status === 401) {
+      sessionStorage.removeItem(CSRF_KEY)
+      window.dispatchEvent(new CustomEvent('av:session-expired', { detail: error.message }))
+    }
+    throw error
   }
   return response.status === 204 ? null : response.json()
 }
@@ -113,6 +118,15 @@ export const api = {
     method: 'PATCH', body: JSON.stringify({ permissions }),
   }),
   deleteUser: (id) => authenticatedWrite(`/admin/users/${id}`, { method: 'DELETE' }),
+  roles: () => request('/admin/roles'),
+  createRole: (payload) => authenticatedWrite('/admin/roles', { method: 'POST', body: JSON.stringify(payload) }),
+  updateRole: (id, payload) => authenticatedWrite(`/admin/roles/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteRole: (id) => authenticatedWrite(`/admin/roles/${id}`, { method: 'DELETE' }),
+
+  welcomePeople: (search = '') => request(`/admin/welcome${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  createWelcomePerson: (payload) => authenticatedWrite('/admin/welcome', { method: 'POST', body: JSON.stringify(payload) }),
+  updateWelcomePerson: (id, payload) => authenticatedWrite(`/admin/welcome/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  addWelcomeVisit: (id, payload) => authenticatedWrite(`/admin/welcome/${id}/visits`, { method: 'POST', body: JSON.stringify(payload) }),
 
   newsletterSubscribers: () => request('/admin/newsletter'),
   updateNewsletterSubscriber: (id, status) => authenticatedWrite(`/admin/newsletter/${id}?status_value=${encodeURIComponent(status)}`, { method: 'PATCH' }),
