@@ -42,6 +42,7 @@ function hasScreenAccess(profile, screen, required = 'view') {
 }
 
 function allowedSection(profile, preferred = 'overview') {
+  if (preferred === 'roles' && hasScreenAccess(profile, 'users')) return preferred
   if (hasScreenAccess(profile, preferred)) return preferred
   return permissionScreens.find(([screen]) => hasScreenAccess(profile, screen))?.[0] || 'overview'
 }
@@ -744,6 +745,37 @@ export function AdminApp() {
     return () => window.removeEventListener('av:session-expired', expired)
   }, [])
 
+  const permissionSignature = JSON.stringify(user?.permissions || {})
+  useEffect(() => {
+    if (!user?.id || user.must_change_password) return undefined
+    let active = true
+    const refreshPermissions = async () => {
+      try {
+        const profile = await api.me()
+        if (!active) return
+        const changed = JSON.stringify(profile.permissions || {}) !== permissionSignature || profile.role !== user.role
+        setUser(profile)
+        setSection((current) => allowedSection(profile, current))
+        if (changed) {
+          await loadData(profile)
+          setNotice('Tus permisos se han actualizado automáticamente.')
+        }
+      } catch (error) {
+        if (error.status !== 401 && active) setNotice(error.message)
+      }
+    }
+    const onVisibility = () => { if (document.visibilityState === 'visible') refreshPermissions() }
+    const interval = window.setInterval(refreshPermissions, 12000)
+    window.addEventListener('focus', refreshPermissions)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshPermissions)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [user?.id, user?.role, user?.must_change_password, permissionSignature])
+
   useEffect(() => {
     if (!notice) return undefined
     const timer = window.setTimeout(() => setNotice(''), 5000)
@@ -798,7 +830,7 @@ export function AdminApp() {
     try {
       await api.updateUserPermissions(id, permissions)
       setUsers(await api.users())
-      setNotice('Directivas actualizadas. Se cerró la sesión de ese usuario para aplicar los cambios.')
+      setNotice('Directivas actualizadas. El usuario las recibirá automáticamente sin cerrar sesión.')
     } catch (error) { setNotice(error.message) }
   }
 
