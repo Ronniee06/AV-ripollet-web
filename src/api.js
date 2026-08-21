@@ -118,6 +118,7 @@ export const api = {
     method: 'PATCH', body: JSON.stringify({ permissions }),
   }),
   deleteUser: (id) => authenticatedWrite(`/admin/users/${id}`, { method: 'DELETE' }),
+  userRoleOptions: () => request('/admin/user-role-options'),
   roles: () => request('/admin/roles'),
   createRole: (payload) => authenticatedWrite('/admin/roles', { method: 'POST', body: JSON.stringify(payload) }),
   updateRole: (id, payload) => authenticatedWrite(`/admin/roles/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),

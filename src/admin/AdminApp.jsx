@@ -23,16 +23,16 @@ const roleLabels = {
 
 const permissionScreens = [
   ['overview', 'Resumen'], ['events', 'Eventos'], ['registrations', 'Inscripciones'], ['people', 'Personas'], ['welcome', 'Bienvenidas'],
-  ['prayer', 'Oración'], ['photos', 'Fotos'], ['users', 'Usuarios'], ['newsletter', 'Newsletter'], ['audit', 'Auditoría'],
+  ['prayer', 'Oración'], ['photos', 'Fotos'], ['users', 'Usuarios'], ['roles', 'Roles'], ['newsletter', 'Newsletter'], ['audit', 'Auditoría'],
 ]
 const permissionLevelLabels = { none: 'Sin acceso', view: 'Solo ver', manage: 'Administrar' }
 const permissionRank = { none: 0, view: 1, manage: 2 }
 const rolePermissionFallback = {
   developer: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
   admin: Object.fromEntries(permissionScreens.map(([screen]) => [screen, 'manage'])),
-  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', welcome: 'none', prayer: 'view', photos: 'manage', users: 'none', newsletter: 'none', audit: 'none' },
-  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', welcome: 'none', prayer: 'manage', photos: 'view', users: 'none', newsletter: 'manage', audit: 'none' },
-  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', welcome: 'none', prayer: 'none', photos: 'view', users: 'none', newsletter: 'view', audit: 'none' },
+  event_manager: { overview: 'view', events: 'manage', registrations: 'manage', people: 'view', welcome: 'none', prayer: 'view', photos: 'manage', users: 'none', roles: 'none', newsletter: 'none', audit: 'none' },
+  communications: { overview: 'view', events: 'view', registrations: 'none', people: 'none', welcome: 'none', prayer: 'manage', photos: 'view', users: 'none', roles: 'none', newsletter: 'manage', audit: 'none' },
+  viewer: { overview: 'view', events: 'view', registrations: 'view', people: 'none', welcome: 'none', prayer: 'none', photos: 'view', users: 'none', roles: 'none', newsletter: 'view', audit: 'none' },
 }
 
 function hasScreenAccess(profile, screen, required = 'view') {
@@ -42,7 +42,6 @@ function hasScreenAccess(profile, screen, required = 'view') {
 }
 
 function allowedSection(profile, preferred = 'overview') {
-  if (preferred === 'roles' && hasScreenAccess(profile, 'users')) return preferred
   if (hasScreenAccess(profile, preferred)) return preferred
   return permissionScreens.find(([screen]) => hasScreenAccess(profile, screen))?.[0] || 'overview'
 }
@@ -714,7 +713,7 @@ export function AdminApp() {
       hasScreenAccess(profile, 'people') ? safe(api.people()) : [],
       hasScreenAccess(profile, 'prayer') ? safe(api.prayerRequests()) : [],
       hasScreenAccess(profile, 'users') ? safe(api.users()) : [],
-      hasScreenAccess(profile, 'users') ? safe(api.roles()) : [],
+      hasScreenAccess(profile, 'roles') ? safe(api.roles()) : hasScreenAccess(profile, 'users') ? safe(api.userRoleOptions()) : [],
       canReadNewsletter ? safe(api.newsletterSubscribers()) : [],
       canReadNewsletter ? safe(api.newsletterCampaigns()) : [],
       canReadNewsletter ? safe(api.newsletterProviderStatus(), {}) : {},
@@ -869,7 +868,7 @@ export function AdminApp() {
     ['users', Users, 'Usuarios'], ['roles', ShieldCheck, 'Roles'],
     ['newsletter', Mail, 'Newsletter'],
     ['audit', FileClock, 'Auditoría'],
-  ].filter(([key]) => hasScreenAccess(user, key === 'roles' ? 'users' : key))
+  ].filter(([key]) => hasScreenAccess(user, key))
 
   return (
     <div className="admin-shell">
