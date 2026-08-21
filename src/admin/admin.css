@@ -315,10 +315,10 @@
 .admin-person-card__contact { min-height: 95px; margin-top: 22px; display: grid; align-content: start; gap: 8px; }
 .admin-person-card__contact span { display: flex; align-items: center; gap: 8px; color: var(--admin-muted); font-size: 11px; overflow-wrap: anywhere; }
 .admin-person-card__contact svg { width: 14px; color: var(--admin-coral); flex: 0 0 auto; }
-.admin-people-grid footer { padding-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--admin-line); }
-.admin-people-grid footer span { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; }
+.admin-people-grid footer { width: 100%; margin: 0; padding: 14px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--admin-ink); background: transparent; border-top: 1px solid var(--admin-line); }
+.admin-people-grid footer span { min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; }
 .admin-people-grid footer svg { width: 14px; color: var(--admin-coral); }
-.admin-people-grid footer small { color: var(--admin-muted); font-size: 10px; }
+.admin-people-grid footer small { min-width: 0; padding: 0; color: var(--admin-muted); border: 0; font-size: 10px; text-align: right; overflow-wrap: anywhere; }
 .admin-person-editor { width: min(720px, 100%); overflow-y: auto; }
 .admin-person-editor__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .admin-person-editor__grid .wide { grid-column: 1 / -1; }
