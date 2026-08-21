@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
   ArrowRight, CalendarDays, Camera, Check, ChevronDown, CirclePlay, Clock3,
-  MapPin, Menu, MessageCircleHeart, MessagesSquare, Send, Users, X,
+  Mail, MapPin, Menu, MessageCircleHeart, MessagesSquare, Phone, Send, Users, X,
 } from 'lucide-react'
 import { api } from './api'
 import { AdminApp } from './admin/AdminApp'
+import { churchOptions } from './churches'
 
 const socials = [
   { name: 'YouTube', url: 'https://www.youtube.com/@alcancevictoriabcnn', icon: CirclePlay },
@@ -188,16 +189,22 @@ function EventCard({ event, onSelect }) {
 }
 
 function EventDetails({ event, onClose }) {
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', adults: 1, children: 0, dietary_notes: '', privacy_accepted: false })
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', church_affiliation: 'unknown', church_name: '', city: '', country: '', adults: 1, children: 0, adult_menus: 0, child_menus: 0, dietary_notes: '', privacy_accepted: false })
   const [status, setStatus] = useState({ loading: false, error: '', result: null })
   const date = new Date(event.starts_at)
   const registrationState = getRegistrationState(event)
   const canRegister = event.registration_enabled && registrationState === 'open'
   const adults = Number(form.adults || 0)
   const children = Number(form.children || 0)
-  const amount = event.pricing_mode === 'adult_child'
+  const registrationAmount = event.pricing_mode === 'adult_child'
     ? adults * event.adult_price_cents + children * event.child_price_cents
     : (adults + children) * event.price_cents
+  const adultMenus = Number(form.adult_menus || 0)
+  const childMenus = Number(form.child_menus || 0)
+  const menuAmount = event.menu_enabled
+    ? adultMenus * event.adult_menu_price_cents + childMenus * event.child_menu_price_cents
+    : 0
+  const amount = registrationAmount + menuAmount
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -211,6 +218,7 @@ function EventDetails({ event, onClose }) {
   const submit = async (submitEvent) => {
     submitEvent.preventDefault()
     if (adults + children < 1) { setStatus({ loading: false, error: 'Añade al menos una persona.', result: null }); return }
+    if (adultMenus > adults || childMenus > children) { setStatus({ loading: false, error: 'No puedes pedir más menús que personas inscritas.', result: null }); return }
     setStatus({ loading: true, error: '', result: null })
     try {
       const result = await api.registerForEvent(event.id, { ...form, adults, children, attendees: adults + children })
@@ -229,20 +237,28 @@ function EventDetails({ event, onClose }) {
           <h2 id="event-dialog-title">{event.title}</h2>
           <p>{event.description}</p>
           <div className="event-dialog__meta"><span><CalendarDays /> {date.toLocaleDateString('es-ES', { dateStyle: 'long' })}</span><span><Clock3 /> {date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span><span><MapPin /> {event.location}</span>{event.capacity && <span><Users /> {event.capacity} plazas</span>}{event.registration_enabled && event.registration_opens_at && <span><CalendarDays /> Inscripciones desde {formatRegistrationDate(event.registration_opens_at)}</span>}{event.registration_enabled && event.registration_closes_at && <span><CalendarDays /> Inscripciones hasta {formatRegistrationDate(event.registration_closes_at)}</span>}</div>
-          <div className="event-dialog__prices">
-            {event.pricing_mode === 'adult_child' ? <><div><span>Menú adulto</span><strong>{formatEventPrice(event, event.adult_price_cents)}</strong></div><div><span>Menú infantil · hasta {event.child_age_limit} años</span><strong>{formatEventPrice(event, event.child_price_cents)}</strong></div></> : <div><span>Mismo menú y precio para adultos y niños</span><strong>{event.price_cents ? formatEventPrice(event, event.price_cents) : 'Gratis'}</strong></div>}
-          </div>
+          {event.registration_enabled && <div className="event-dialog__prices">
+            {event.pricing_mode === 'adult_child' ? <><div><span>Inscripción adulto</span><strong>{formatEventPrice(event, event.adult_price_cents)}</strong></div><div><span>Inscripción infantil · hasta {event.child_age_limit} años</span><strong>{formatEventPrice(event, event.child_price_cents)}</strong></div></> : event.pricing_mode === 'free' ? <div><span>Inscripción al evento</span><strong>Gratis</strong></div> : <div><span>Precio por persona</span><strong>{event.price_cents ? formatEventPrice(event, event.price_cents) : 'Gratis'}</strong></div>}
+            {event.menu_enabled && <><div className="event-dialog__price-separator"><span>Menús opcionales · se cobran aparte</span></div><div><span>Menú adulto</span><strong>{formatEventPrice(event, event.adult_menu_price_cents)}</strong></div><div><span>Menú infantil</span><strong>{event.child_menu_price_cents ? formatEventPrice(event, event.child_menu_price_cents) : 'Gratis'}</strong></div></>}
+          </div>}
+          {!event.registration_enabled && event.contact_name && <div className="event-dialog__contact">
+            <span>Evento informativo · no necesita inscripción</span>
+            <strong>Consulta con {event.contact_name}</strong>
+            <div>{event.contact_phone && <a href={`tel:${event.contact_phone.replace(/[^\d+]/g, '')}`}><Phone /> Llamar</a>}{event.contact_email && <a href={`mailto:${event.contact_email}`}><Mail /> Escribir email</a>}</div>
+          </div>}
           {event.registration_enabled && registrationState !== 'open' && <div className={`event-dialog__availability ${registrationState}`}><strong>{registrationState === 'upcoming' ? 'Inscripciones todavía no abiertas' : 'Inscripciones cerradas'}</strong><span>{registrationState === 'upcoming' && event.registration_opens_at ? `El formulario estará disponible desde el ${formatRegistrationDate(event.registration_opens_at)}.` : event.registration_closes_at ? `El plazo finalizó el ${formatRegistrationDate(event.registration_closes_at)}.` : 'El formulario de inscripción ya no está disponible.'}</span></div>}
         </div>
         {canRegister && <div className="event-dialog__registration">
-          {status.result ? <div className="event-registration-success"><Check /><h3>Inscripción recibida</h3><p>{status.result.status === 'waitlist' ? 'Os hemos añadido a la lista de espera.' : 'La plaza queda pendiente de confirmación.'}</p>{status.result.payment_required && <strong>Importe: {formatEventPrice(event, status.result.amount_cents)}</strong>}</div> : <form onSubmit={submit}>
+          {status.result ? <div className="event-registration-success"><Check /><h3>Inscripción recibida</h3><p>{status.result.status === 'waitlist' ? 'Os hemos añadido a la lista de espera.' : 'La plaza queda pendiente de confirmación.'}</p>{status.result.registration_amount_cents > 0 && <span>Inscripción: {formatEventPrice(event, status.result.registration_amount_cents)}</span>}{status.result.menu_amount_cents > 0 && <span>Menús: {formatEventPrice(event, status.result.menu_amount_cents)}</span>}{status.result.payment_required && <strong>Total: {formatEventPrice(event, status.result.amount_cents)}</strong>}{status.result.payment_required && <div className="event-payment-instructions"><b>Cómo realizar el pago</b><p>{event.payment_instructions || 'El equipo de inscripciones se pondrá en contacto contigo para indicarte cómo realizar el pago.'}</p></div>}</div> : <form onSubmit={submit}>
             <div><p className="eyebrow">Reserva tu plaza</p><h3>Inscripción</h3></div>
             <label>Nombre y apellidos<input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} required minLength="2" /></label>
             <div className="event-registration-grid"><label>Email<input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required /></label><label>Teléfono<input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></label></div>
+            <fieldset className="event-registration-origin"><legend>Procedencia <span>· opcional</span></legend><label>Iglesia<select value={form.church_affiliation} onChange={(e) => update('church_affiliation', e.target.value)}>{churchOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>{form.church_affiliation === 'other_church' && <label>Nombre de la iglesia<input value={form.church_name} onChange={(e) => update('church_name', e.target.value)} /></label>}<div className="event-registration-grid"><label>Ciudad<input value={form.city} onChange={(e) => update('city', e.target.value)} /></label><label>País<input value={form.country} onChange={(e) => update('country', e.target.value)} /></label></div></fieldset>
             <div className="event-registration-grid"><label>Adultos<input type="number" min="0" max="20" value={form.adults} onChange={(e) => update('adults', e.target.value)} required /></label><label>Niños{event.pricing_mode === 'adult_child' ? ` (hasta ${event.child_age_limit} años)` : ''}<input type="number" min="0" max="20" value={form.children} onChange={(e) => update('children', e.target.value)} required /></label></div>
+            {event.menu_enabled && <fieldset className="event-registration-menus"><legend>Menús opcionales <span>· se cobran aparte</span></legend><div className="event-registration-grid"><label>Menús de adulto<input type="number" min="0" max={adults} value={form.adult_menus} onChange={(e) => update('adult_menus', e.target.value)} /></label><label>Menús infantiles<input type="number" min="0" max={children} value={form.child_menus} onChange={(e) => update('child_menus', e.target.value)} /></label></div><small>Puedes inscribir a alguien sin pedirle menú.</small></fieldset>}
             <label>Alergias o necesidades alimentarias<textarea rows="2" value={form.dietary_notes} onChange={(e) => update('dietary_notes', e.target.value)} /></label>
-            <label className="event-registration-consent"><input type="checkbox" checked={form.privacy_accepted} onChange={(e) => update('privacy_accepted', e.target.checked)} required /> Acepto el tratamiento de mis datos para gestionar esta inscripción.</label>
-            {amount > 0 && <div className="event-registration-total"><span>Total previsto</span><strong>{formatEventPrice(event, amount)}</strong></div>}
+            <label className="event-registration-consent"><input type="checkbox" checked={form.privacy_accepted} onChange={(e) => update('privacy_accepted', e.target.checked)} required /> Acepto el tratamiento de mis datos para gestionar esta inscripción y mantener mi ficha de contacto. <a href="/#privacidad" target="_blank" rel="noreferrer">Ver privacidad</a>.</label>
+            {amount > 0 && <div className="event-registration-total"><div><span>Inscripción</span><b>{formatEventPrice(event, registrationAmount)}</b>{event.menu_enabled && <><span>Menús</span><b>{formatEventPrice(event, menuAmount)}</b></>}</div><span>Total previsto</span><strong>{formatEventPrice(event, amount)}</strong></div>}
             {status.error && <p className="form-status error" role="alert">{status.error}</p>}
             <button className="button button--coral" disabled={status.loading}>{status.loading ? 'Enviando…' : 'Solicitar inscripción'} <ArrowRight size={17} /></button>
           </form>}
@@ -255,14 +271,27 @@ function EventDetails({ event, onClose }) {
 function Events() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [selectedEvent, setSelectedEvent] = useState(null)
-  useEffect(() => { api.events().then(setEvents).catch(() => setEvents([])).finally(() => setLoading(false)) }, [])
+  const loadEvents = () => {
+    setLoading(true); setError('')
+    api.events().then(setEvents).catch((requestError) => { setEvents([]); setError(requestError.message) }).finally(() => setLoading(false))
+  }
+  useEffect(() => {
+    let active = true
+    api.events()
+      .then((data) => { if (active) setEvents(data) })
+      .catch((requestError) => { if (active) { setEvents([]); setError(requestError.message) } })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
   return (
     <section className="section events" id="eventos">
       <div className="section-heading section-heading--ink"><div><p className="eyebrow">Próximamente</p><h2>Momentos para<br />{' '}vivir en comunidad.</h2></div></div>
       <div className="events__grid">
         {loading && <p className="empty">Cargando próximos eventos…</p>}
-        {!loading && events.length === 0 && <div className="empty-state"><CalendarDays /><h3>Pronto habrá nuevos encuentros</h3><p>Mientras tanto, te esperamos en nuestras reuniones semanales.</p></div>}
+        {!loading && error && <div className="empty-state" role="alert"><CalendarDays /><h3>No pudimos cargar los eventos</h3><p>{error}</p><button type="button" className="button" onClick={loadEvents}>Volver a intentar</button></div>}
+        {!loading && !error && events.length === 0 && <div className="empty-state"><CalendarDays /><h3>Pronto habrá nuevos encuentros</h3><p>Mientras tanto, te esperamos en nuestras reuniones semanales.</p></div>}
         {events.map((event) => <EventCard key={event.id} event={event} onSelect={setSelectedEvent} />)}
       </div>
       {selectedEvent && <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
@@ -298,17 +327,7 @@ function Pastors() {
   return (
     <section className="pastors">
       <picture className="pastors__visual">
-        <source
-          type="image/avif"
-          srcSet="/media/pastors-juan-capi-720.avif 720w, /media/pastors-juan-capi-1080.avif 1080w, /media/pastors-juan-capi-1439.avif 1439w"
-          sizes="(max-width: 900px) 100vw, 50vw"
-        />
-        <source
-          type="image/webp"
-          srcSet="/media/pastors-juan-capi-720.webp 720w, /media/pastors-juan-capi-1080.webp 1080w, /media/pastors-juan-capi-1439.webp 1439w"
-          sizes="(max-width: 900px) 100vw, 50vw"
-        />
-        <img src="/media/pastors-juan-capi-1080.webp" alt="Pastora Capi compartiendo la Palabra junto al Pastor Juan P. Zamora" loading="lazy" decoding="async" width="1439" height="1440" />
+        <img src="/community/pastors-juan-capi-green.png" alt="Pastor Juan P. Zamora y Pastora Capi" loading="lazy" decoding="async" width="1254" height="1254" />
         <span>Sirviendo a Barcelona Norte</span>
       </picture>
       <div className="pastors__copy"><p className="eyebrow">Nuestros pastores</p><h2>Pastor Juan P. Zamora<br />{' '}y Pastora Capi</h2><p>Con un corazón por las personas y por la ciudad, lideran una comunidad donde cada historia importa y cada generación puede encontrar su propósito.</p><blockquote>“Queremos que encuentres una familia, crezcas en tu fe y seas parte de lo que Dios está haciendo.”</blockquote></div>
@@ -350,7 +369,7 @@ function Newsletter() {
       <form onSubmit={submit}>
         <label>Nombre <small>(opcional)</small><input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></label>
         <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
-        <label className="newsletter__consent"><input type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} required /> Quiero recibir comunicaciones de Alcance Victoria Barcelona Norte.</label>
+        <label className="newsletter__consent"><input type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} required /> Quiero recibir comunicaciones de Alcance Victoria Barcelona Norte y he leído la <a href="#privacidad">información de privacidad</a>.</label>
         <button className="button button--coral" disabled={status === 'sending'}>{status === 'sending' ? 'Guardando…' : status === 'done' ? <><Check /> Suscripción confirmada</> : <>Quiero recibir noticias <Send size={17} /></>}</button>
         {status === 'error' && <p className="form-error">No se pudo completar la suscripción. Inténtalo de nuevo.</p>}
       </form>
@@ -364,10 +383,14 @@ function Visit() {
   )
 }
 
-function Footer() {
-  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, url, icon: Icon }) => <a key={name} href={url} target="_blank" rel="noreferrer" aria-label={name}><Icon /></a>)}</div><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
+function Privacy() {
+  return <section className="privacy" id="privacidad"><div><p className="eyebrow">Tus datos importan</p><h2>Información de privacidad</h2></div><div><p><strong>Responsable:</strong> Alcance Victoria Barcelona Norte.</p><p>Usamos los datos que nos das únicamente para gestionar inscripciones, atender peticiones de oración o enviarte noticias cuando lo has autorizado. El equipo autorizado de la iglesia puede acceder a ellos y no se venden a terceros.</p><p>Puedes solicitar acceso, corrección o eliminación contactando directamente con la iglesia. Conservaremos los datos solo durante el tiempo necesario para cada finalidad y las obligaciones aplicables.</p><small>Antes de publicar comercialmente la plataforma, este texto debe completarse con los datos legales y el canal formal de contacto del responsable.</small></div></section>
 }
 
-function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><Visit /></main><Footer /></> }
+function Footer() {
+  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, url, icon: Icon }) => <a key={name} href={url} target="_blank" rel="noreferrer" aria-label={name}><Icon /></a>)}</div><a href="#privacidad">Privacidad</a><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
+}
+
+function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><Visit /><Privacy /></main><Footer /></> }
 
 export default function App() { return window.location.pathname.startsWith('/gestion') ? <AdminApp /> : <Home /> }

@@ -133,6 +133,15 @@ main:focus { outline: none; }
 .event-dialog__prices div { display: flex; justify-content: space-between; gap: 15px; }
 .event-dialog__prices span { font-size: 12px; }
 .event-dialog__prices strong { white-space: nowrap; }
+.event-dialog__prices .event-dialog__price-separator { margin-top: 6px; padding-top: 12px; border-top: 1px dashed rgba(7,24,43,.16); }
+.event-dialog__price-separator span { color: var(--coral-dark); font-weight: 800; }
+.event-dialog__contact { margin-top: 28px; padding: 18px; display: grid; gap: 6px; background: rgba(255,255,255,.68); border-left: 3px solid var(--coral); }
+.event-dialog__contact > span { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.event-dialog__contact > strong { font-family: var(--display); font-size: 22px; font-weight: 500; }
+.event-dialog__contact > div { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 8px; }
+.event-dialog__contact a { min-height: 38px; padding: 0 13px; display: inline-flex; align-items: center; gap: 7px; color: white; background: var(--navy); font-size: 12px; font-weight: 800; text-decoration: none; }
+.event-dialog__contact a:hover { background: var(--coral); }
+.event-dialog__contact svg { width: 15px; }
 .event-dialog__availability { margin-top: 24px; padding: 16px 18px; display: grid; gap: 5px; color: var(--ink); background: rgba(255,255,255,.62); border-left: 3px solid var(--coral); }
 .event-dialog__availability strong { font-size: 14px; }
 .event-dialog__availability span { color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -140,17 +149,29 @@ main:focus { outline: none; }
 .event-dialog__registration form { display: grid; gap: 14px; }
 .event-dialog__registration h3, .event-registration-success h3 { margin: 0; font-family: var(--display); font-size: 38px; font-weight: 500; }
 .event-dialog__registration label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
-.event-dialog__registration input, .event-dialog__registration textarea { width: 100%; min-height: 44px; padding: 10px 12px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 7px; font: inherit; }
+.event-dialog__registration input, .event-dialog__registration textarea, .event-dialog__registration select { width: 100%; min-height: 44px; padding: 10px 12px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 7px; font: inherit; }
 .event-dialog__registration textarea { resize: vertical; }
 .event-registration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.event-registration-menus { margin: 0; padding: 14px; border: 1px solid rgba(7,24,43,.15); background: rgba(244,246,245,.7); }
+.event-registration-menus legend { padding: 0 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.event-registration-menus legend span, .event-registration-menus > small { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.event-registration-menus > small { display: block; margin-top: 8px; font-size: 11px; }
+.event-registration-origin { margin: 0; padding: 14px; display: grid; gap: 10px; border: 1px solid rgba(7,24,43,.15); background: rgba(232,243,247,.45); }
+.event-registration-origin legend { padding: 0 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.event-registration-origin legend span { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
 .event-registration-consent { grid-template-columns: auto 1fr; align-items: start; line-height: 1.45; }
 .event-registration-consent input { width: 18px; min-height: 18px; margin-top: 1px; }
-.event-registration-total { padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; background: var(--paper); }
+.event-registration-total { padding: 13px 15px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 18px; background: var(--paper); }
+.event-registration-total > div { grid-row: 1 / span 2; display: grid; grid-template-columns: auto auto; gap: 2px 12px; color: var(--muted); font-size: 11px; }
+.event-registration-total b { color: var(--ink); text-align: right; }
 .event-registration-total span { color: var(--muted); font-size: 12px; font-weight: 700; }
 .event-registration-total strong { font-family: var(--display); font-size: 25px; }
+.event-registration-success > span { color: var(--muted); font-size: 13px; }
 .event-registration-success { min-height: 330px; display: grid; place-items: center; align-content: center; text-align: center; }
 .event-registration-success > svg { width: 48px; height: 48px; margin-bottom: 18px; padding: 10px; color: white; background: var(--coral); border-radius: 50%; }
 .event-registration-success p { color: var(--muted); }
+.event-payment-instructions { width: 100%; margin-top: 18px; padding: 16px; background: #f2f6f3; border-left: 3px solid #397d5c; text-align: left; }
+.event-payment-instructions p { margin: 7px 0 0; white-space: pre-wrap; line-height: 1.5; }
 .empty-state { grid-column: 1 / -1; min-height: 290px; border: 1px dashed #b7c2c9; display: grid; place-items: center; align-content: center; text-align: center; padding: 30px; color: var(--muted); }
 .empty-state svg { color: var(--coral); width: 36px; height: 36px; }
 .empty-state h3 { color: var(--ink); font-family: var(--display); font-size: 28px; margin: 18px 0 2px; }
@@ -195,6 +216,11 @@ input:focus, textarea:focus { border-color: var(--coral); }
 .prayer input, .prayer textarea { border-width: 0 0 1px; }
 .full { grid-column: 1 / -1; }
 .prayer form .button { width: max-content; margin-top: 12px; }
+.privacy { padding: 72px max(28px, 7vw); display: grid; grid-template-columns: .7fr 1.3fr; gap: 80px; background: #f1f4f2; }
+.privacy h2 { margin: 0; font-family: var(--display); font-size: clamp(36px, 4vw, 58px); font-weight: 500; }
+.privacy p { max-width: 780px; color: var(--muted); line-height: 1.65; }
+.privacy small { display: block; max-width: 780px; padding-top: 12px; color: var(--muted); border-top: 1px solid #ccd5d0; line-height: 1.5; }
+.event-registration-consent a, .newsletter__consent a { color: inherit; font-weight: 800; }
 .form-error { color: #ffb6ab; font-size: 13px; }
 .newsletter { padding: 110px max(36px, calc((100vw - 1240px) / 2)); display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(60px, 9vw, 130px); color: white; background: var(--navy); }
 .newsletter > div > p:last-child { max-width: 500px; color: #aebccc; font-size: 17px; line-height: 1.7; }
@@ -231,7 +257,7 @@ footer > small { grid-column: 1 / -1; color: #607183; padding-top: 28px; border-
   .hero__content { width: calc(100% - 40px); }
   .hero__veil { background: linear-gradient(90deg, rgba(5,19,34,.93), rgba(5,19,34,.45)), linear-gradient(0deg, rgba(5,19,34,.65), transparent 45%); }
   .section, .prayer, .newsletter { padding: 90px 28px; }
-  .intro, .section-heading, .ministries__intro, .prayer, .newsletter, .values__header { grid-template-columns: 1fr; gap: 40px; }
+  .intro, .section-heading, .ministries__intro, .prayer, .newsletter, .privacy, .values__header { grid-template-columns: 1fr; gap: 40px; }
   .values, .community-gallery { padding: 90px 28px; }
   .five-es article { grid-template-columns: 70px 200px 1fr; }
   .three-cs { grid-template-columns: 1fr 1fr; }

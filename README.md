@@ -67,7 +67,7 @@ npm run build
 npm run preview
 ```
 
-## Despliegue futuro en Cloudflare Pages
+## Despliegue en Cloudflare Pages
 
 Configuración prevista:
 
@@ -78,6 +78,6 @@ Configuración prevista:
 | Output directory | `dist` |
 | Variable | `VITE_API_URL=https://URL-DE-LA-API/api` |
 
-La ruta `/gestion` necesita fallback de SPA hacia `index.html` para que una visita directa no produzca un 404.
+La ruta `/gestion` ya incluye el fallback SPA en `public/_redirects`. Las cabeceras de seguridad se publican desde `public/_headers`.
 
-Cuando el backend se migre a Supabase, la interfaz podrá conservarse y se sustituirá únicamente el cliente de `src/api.js`.
+La guía conjunta de Cloudflare Pages, Render y Neon está en [`../backend/DESPLIEGUE_DEMO_GRATUITO.md`](../backend/DESPLIEGUE_DEMO_GRATUITO.md).

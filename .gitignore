@@ -4,6 +4,7 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 .DS_Store
 Thumbs.db
@@ -11,4 +12,4 @@ Thumbs.db
 
 .vite/
 .eslintcache
-
+.playwright-cli/
