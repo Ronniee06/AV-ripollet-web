@@ -59,6 +59,7 @@ async function authenticatedWrite(path, options) {
 
 export const api = {
   events: () => request('/events'),
+  churches: () => request('/churches'),
   registerForEvent: (id, payload) => request(`/events/${id}/registrations`, { method: 'POST', body: JSON.stringify(payload) }),
   prayer: (payload) => request('/prayer-requests', { method: 'POST', body: JSON.stringify(payload) }),
   prayerRequests: () => request('/admin/prayer-requests'),
@@ -110,6 +111,9 @@ export const api = {
   people: () => request('/admin/people'),
   createPerson: (payload) => authenticatedWrite('/admin/people', { method: 'POST', body: JSON.stringify(payload) }),
   updatePerson: (id, payload) => authenticatedWrite(`/admin/people/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  adminChurches: () => request('/admin/churches'),
+  createChurch: (payload) => authenticatedWrite('/admin/churches', { method: 'POST', body: JSON.stringify(payload) }),
+  updateChurch: (id, payload) => authenticatedWrite(`/admin/churches/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
 
   users: () => request('/admin/users'),
   createUser: (payload) => authenticatedWrite('/admin/users', { method: 'POST', body: JSON.stringify(payload) }),

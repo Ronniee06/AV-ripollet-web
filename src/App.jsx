@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { api } from './api'
 import { AdminApp } from './admin/AdminApp'
-import { churchOptions } from './churches'
+import { buildChurchOptions } from './churches'
 
 function YouTubeLogo() {
   return <svg viewBox="0 0 576 512" aria-hidden="true"><path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.5-48.6C458.8 64 288 64 288 64S117.2 64 74.8 75.5c-23.7 6.3-42.2 24.9-48.5 48.6C15 166.9 15 256.4 15 256.4s0 89.4 11.3 132.3c6.3 23.7 24.8 41.5 48.5 47.8C117.2 448 288 448 288 448s170.8 0 213.2-11.5c23.7-6.3 42.2-24.1 48.5-47.8 11.3-42.9 11.3-132.3 11.3-132.3s0-89.5-11.3-132.3zM232.1 337.6V175.2l142.8 81.2-142.8 81.2z" /></svg>
@@ -200,7 +200,7 @@ function EventCard({ event, onSelect }) {
   )
 }
 
-function EventDetails({ event, onClose }) {
+function EventDetails({ event, churchOptions, onClose }) {
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', church_affiliation: 'unknown', church_name: '', city: '', country: '', adults: 1, children: 0, adult_menus: 0, child_menus: 0, dietary_notes: '', privacy_accepted: false })
   const [status, setStatus] = useState({ loading: false, error: '', result: null })
   const date = new Date(event.starts_at)
@@ -265,7 +265,7 @@ function EventDetails({ event, onClose }) {
             <div><p className="eyebrow">Reserva tu plaza</p><h3>Inscripción</h3></div>
             <label>Nombre y apellidos<input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} required minLength="2" /></label>
             <div className="event-registration-grid"><label>Email<input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required /></label><label>Teléfono<input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></label></div>
-            <fieldset className="event-registration-origin"><legend>Procedencia <span>· opcional</span></legend><label>Iglesia<select value={form.church_affiliation} onChange={(e) => update('church_affiliation', e.target.value)}>{churchOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>{form.church_affiliation === 'other_church' && <label>Nombre de la iglesia<input value={form.church_name} onChange={(e) => update('church_name', e.target.value)} /></label>}<div className="event-registration-grid"><label>Ciudad<input value={form.city} onChange={(e) => update('city', e.target.value)} /></label><label>País<input value={form.country} onChange={(e) => update('country', e.target.value)} /></label></div></fieldset>
+            <fieldset className="event-registration-origin"><legend>Procedencia <span>· opcional</span></legend><label>Iglesia<select value={form.church_affiliation} onChange={(e) => update('church_affiliation', e.target.value)}>{churchOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>{['other_church', 'av_other'].includes(form.church_affiliation) && <label>Nombre de la iglesia<input value={form.church_name} onChange={(e) => update('church_name', e.target.value)} /></label>}<div className="event-registration-grid"><label>Ciudad<input value={form.city} onChange={(e) => update('city', e.target.value)} /></label><label>País<input value={form.country} onChange={(e) => update('country', e.target.value)} /></label></div></fieldset>
             <div className="event-registration-grid"><label>Adultos<input type="number" min="0" max="20" value={form.adults} onChange={(e) => update('adults', e.target.value)} required /></label><label>Niños{event.pricing_mode === 'adult_child' ? ` (hasta ${event.child_age_limit} años)` : ''}<input type="number" min="0" max="20" value={form.children} onChange={(e) => update('children', e.target.value)} required /></label></div>
             {event.menu_enabled && <fieldset className="event-registration-menus"><legend>Menús opcionales <span>· se cobran aparte</span></legend><div className="event-registration-grid"><label>Menús de adulto<input type="number" min="0" max={adults} value={form.adult_menus} onChange={(e) => update('adult_menus', e.target.value)} /></label><label>Menús infantiles<input type="number" min="0" max={children} value={form.child_menus} onChange={(e) => update('child_menus', e.target.value)} /></label></div><small>Puedes inscribir a alguien sin pedirle menú.</small></fieldset>}
             <label>Alergias o necesidades alimentarias<textarea rows="2" value={form.dietary_notes} onChange={(e) => update('dietary_notes', e.target.value)} /></label>
@@ -282,17 +282,18 @@ function EventDetails({ event, onClose }) {
 
 function Events() {
   const [events, setEvents] = useState([])
+  const [churches, setChurches] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const loadEvents = () => {
     setLoading(true); setError('')
-    api.events().then(setEvents).catch((requestError) => { setEvents([]); setError(requestError.message) }).finally(() => setLoading(false))
+    Promise.all([api.events(), api.churches().catch(() => [])]).then(([eventData, churchData]) => { setEvents(eventData); setChurches(churchData) }).catch((requestError) => { setEvents([]); setError(requestError.message) }).finally(() => setLoading(false))
   }
   useEffect(() => {
     let active = true
-    api.events()
-      .then((data) => { if (active) setEvents(data) })
+    Promise.all([api.events(), api.churches().catch(() => [])])
+      .then(([eventData, churchData]) => { if (active) { setEvents(eventData); setChurches(churchData) } })
       .catch((requestError) => { if (active) { setEvents([]); setError(requestError.message) } })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
@@ -306,7 +307,7 @@ function Events() {
         {!loading && !error && events.length === 0 && <div className="empty-state"><CalendarDays /><h3>Pronto habrá nuevos encuentros</h3><p>Mientras tanto, te esperamos en nuestras reuniones semanales.</p></div>}
         {events.map((event) => <EventCard key={event.id} event={event} onSelect={setSelectedEvent} />)}
       </div>
-      {selectedEvent && <EventDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
+      {selectedEvent && <EventDetails event={selectedEvent} churchOptions={buildChurchOptions(churches)} onClose={() => setSelectedEvent(null)} />}
     </section>
   )
 }

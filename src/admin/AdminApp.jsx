@@ -5,7 +5,7 @@ import {
   TableProperties, UserCheck,
 } from 'lucide-react'
 import { api } from '../api'
-import { churchOptions } from '../churches'
+import { buildChurchOptions } from '../churches'
 import { PeopleAdmin } from './PeopleAdmin'
 import { NewsletterAdmin } from './NewsletterAdmin'
 import { PrayerAdmin } from './PrayerAdmin'
@@ -501,7 +501,7 @@ function UserEditor({ currentUser, roles, onSave, onClose }) {
   )
 }
 
-function RegistrationEditor({ events, onSave, onClose }) {
+function RegistrationEditor({ events, churches, onSave, onClose }) {
   const [form, setForm] = useState({
     event_id: events[0]?.id?.toString() || '', full_name: '', email: '', phone: '',
     church_affiliation: 'unknown', church_name: '', city: '', country: '',
@@ -510,6 +510,7 @@ function RegistrationEditor({ events, onSave, onClose }) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const churchOptions = buildChurchOptions(churches)
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
   const selectedEvent = events.find((item) => item.id === Number(form.event_id))
 
@@ -548,7 +549,7 @@ function RegistrationEditor({ events, onSave, onClose }) {
           <label>Email <small>(opcional)</small><input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} /></label>
           <label>Teléfono <small>(opcional)</small><input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></label>
           <label className="wide">Iglesia de procedencia <small>(opcional)</small><select value={form.church_affiliation} onChange={(e) => update('church_affiliation', e.target.value)}>{churchOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-          {form.church_affiliation === 'other_church' && <label className="wide">Nombre de la iglesia<input value={form.church_name} onChange={(e) => update('church_name', e.target.value)} /></label>}
+          {['other_church', 'av_other'].includes(form.church_affiliation) && <label className="wide">Nombre de la iglesia<input value={form.church_name} onChange={(e) => update('church_name', e.target.value)} /></label>}
           <label>Ciudad<input value={form.city} onChange={(e) => update('city', e.target.value)} /></label>
           <label>País<input value={form.country} onChange={(e) => update('country', e.target.value)} /></label>
           <label>Adultos<input type="number" min="0" max="20" value={form.adults} onChange={(e) => update('adults', e.target.value)} required /></label>
@@ -682,6 +683,7 @@ export function AdminApp() {
   const [events, setEvents] = useState([])
   const [registrations, setRegistrations] = useState([])
   const [people, setPeople] = useState([])
+  const [churches, setChurches] = useState([])
   const [prayerRequests, setPrayerRequests] = useState([])
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
@@ -707,10 +709,11 @@ export function AdminApp() {
   const loadData = async (profile) => {
     const safe = async (promise, fallback = []) => { try { return await promise } catch (error) { if (error.status === 401) throw error; return fallback } }
     const canReadNewsletter = hasScreenAccess(profile, 'newsletter')
-    const [eventData, registrationData, peopleData, prayerData, userData, roleData, subscriberData, campaignData, providerData, auditData] = await Promise.all([
+    const [eventData, registrationData, peopleData, churchData, prayerData, userData, roleData, subscriberData, campaignData, providerData, auditData] = await Promise.all([
       hasScreenAccess(profile, 'events') ? safe(api.adminEvents()) : [],
       hasScreenAccess(profile, 'registrations') ? safe(api.registrations()) : [],
       hasScreenAccess(profile, 'people') ? safe(api.people()) : [],
+      hasScreenAccess(profile, 'people') ? safe(api.adminChurches()) : hasScreenAccess(profile, 'registrations') ? safe(api.churches()) : [],
       hasScreenAccess(profile, 'prayer') ? safe(api.prayerRequests()) : [],
       hasScreenAccess(profile, 'users') ? safe(api.users()) : [],
       hasScreenAccess(profile, 'roles') ? safe(api.roles()) : hasScreenAccess(profile, 'users') ? safe(api.userRoleOptions()) : [],
@@ -719,12 +722,13 @@ export function AdminApp() {
       canReadNewsletter ? safe(api.newsletterProviderStatus(), {}) : {},
       hasScreenAccess(profile, 'audit') ? safe(api.audit()) : [],
     ])
-    setEvents(eventData); setRegistrations(registrationData); setPeople(peopleData); setPrayerRequests(prayerData); setUsers(userData); setRoles(roleData); setSubscribers(subscriberData); setCampaigns(campaignData); setNewsletterProvider(providerData); setAudit(auditData)
+    setEvents(eventData); setRegistrations(registrationData); setPeople(peopleData); setChurches(churchData); setPrayerRequests(prayerData); setUsers(userData); setRoles(roleData); setSubscribers(subscriberData); setCampaigns(campaignData); setNewsletterProvider(providerData); setAudit(auditData)
   }
 
   const reloadRoles = async () => setRoles(await api.roles())
 
   const reloadPeople = async () => setPeople(await api.people())
+  const reloadChurches = async () => setChurches(await api.adminChurches())
   const reloadPrayer = async () => setPrayerRequests(await api.prayerRequests())
 
   const reloadNewsletter = async () => {
@@ -912,7 +916,7 @@ export function AdminApp() {
           <div className="admin-table-wrap"><table><thead><tr><th>Persona</th><th>Evento</th><th>Plazas</th><th>Adultos / niños</th><th>Menús A / N</th><th>Estado</th><th>Pago</th><th>Acciones</th></tr></thead><tbody>{registrations.map((item) => <tr key={item.id}><td><strong>{item.full_name}</strong><small>{item.email || item.phone || 'Sin contacto'}</small></td><td>{item.event_title}</td><td>{item.attendees}</td><td>{item.adults ?? item.attendees} / {item.children ?? 0}</td><td>{item.adult_menus ?? 0} / {item.child_menus ?? 0}</td><td><span className={`admin-status ${item.status}`}>{registrationStatusLabels[item.status] || item.status}</span></td><td>{paymentStatusLabels[item.payment_status] || item.payment_status}</td><td>{canManageRegistrations && <div className="admin-inline-actions"><button onClick={() => updateRegistration(item.id, { status: 'confirmed' })}>Confirmar</button>{item.payment_status === 'pending' && <button onClick={() => updateRegistration(item.id, { payment_status: 'paid' })}>Marcar pagado</button>}</div>}</td></tr>)}</tbody></table></div>
         </section>}
 
-        {section === 'people' && <PeopleAdmin people={people} events={events} canManage={canManagePeople} reload={reloadPeople} notify={setNotice} />}
+        {section === 'people' && <PeopleAdmin people={people} events={events} churches={churches} canManage={canManagePeople} reload={reloadPeople} reloadChurches={reloadChurches} notify={setNotice} />}
 
         {section === 'welcome' && <WelcomeAdmin canManage={hasScreenAccess(user, 'welcome', 'manage')} notify={setNotice} />}
 
@@ -943,7 +947,7 @@ export function AdminApp() {
 
       {eventEditor && <EventEditor value={eventEditor.id ? eventEditor : null} onSave={saveEvent} onClose={() => setEventEditor(null)} />}
       {userEditor && <UserEditor currentUser={user} roles={roles} onSave={createUser} onClose={() => setUserEditor(false)} />}
-      {registrationEditor && <RegistrationEditor events={events} onSave={createRegistration} onClose={() => setRegistrationEditor(false)} />}
+      {registrationEditor && <RegistrationEditor events={events} churches={churches} onSave={createRegistration} onClose={() => setRegistrationEditor(false)} />}
       {passwordEditor && <PasswordEditor onSave={changeOwnPassword} onClose={() => setPasswordEditor(false)} />}
       {passwordResetUser && <PasswordEditor target={passwordResetUser} onSave={resetUserPassword} onClose={() => setPasswordResetUser(null)} />}
     </div>

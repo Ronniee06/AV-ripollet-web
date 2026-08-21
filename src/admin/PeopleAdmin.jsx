@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Building2, CalendarDays, Mail, MapPin, Pencil, Phone, Plus, Search, UserRound, UsersRound, X } from 'lucide-react'
+import { Building2, CalendarDays, Church, Mail, MapPin, Pencil, Phone, Plus, Search, UserRound, UsersRound, X } from 'lucide-react'
 import { api } from '../api'
-import { churchLabel, churchOptions, personTypeLabel, personTypeOptions } from '../churches'
+import { buildChurchOptions, churchLabel, personTypeLabel, personTypeOptions } from '../churches'
+import { ChurchesManager } from './ChurchesManager'
 
 const emptyPerson = {
   full_name: '', email: '', phone: '', person_type: 'unknown', church_affiliation: 'unknown',
   church_name: '', city: '', country: '', notes: '',
 }
 
-function PersonEditor({ person, onClose, onSaved, notify }) {
+function PersonEditor({ person, churchOptions, onClose, onSaved, notify }) {
   const [form, setForm] = useState(person ? { ...emptyPerson, ...person } : emptyPerson)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -52,12 +53,14 @@ function PersonEditor({ person, onClose, onSaved, notify }) {
   </div>
 }
 
-export function PeopleAdmin({ people, events, canManage, reload, notify }) {
+export function PeopleAdmin({ people, events, churches, canManage, reload, reloadChurches, notify }) {
   const [search, setSearch] = useState('')
   const [type, setType] = useState('all')
   const [church, setChurch] = useState('all')
   const [eventId, setEventId] = useState('all')
   const [editor, setEditor] = useState(null)
+  const [churchManagerOpen, setChurchManagerOpen] = useState(false)
+  const churchOptions = useMemo(() => buildChurchOptions(churches), [churches])
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('es')
@@ -77,7 +80,7 @@ export function PeopleAdmin({ people, events, canManage, reload, notify }) {
   return <section className="admin-people">
     <div className="admin-people__hero">
       <div><p className="admin-kicker">Comunidad</p><h2>Personas</h2><p>Una ficha por persona, con su procedencia y los eventos en los que ha participado.</p></div>
-      {canManage && <button className="admin-primary" onClick={() => setEditor({ mode: 'new' })}><Plus size={18} /> Añadir persona</button>}
+      {canManage && <div className="admin-people__actions"><button className="admin-secondary" onClick={() => setChurchManagerOpen(true)}><Church size={18} /> Gestionar iglesias</button><button className="admin-primary" onClick={() => setEditor({ mode: 'new' })}><Plus size={18} /> Añadir persona</button></div>}
       <div className="admin-people__counts"><span><strong>{people.length}</strong> contactos</span><span><strong>{avPeople}</strong> de AV</span><span><strong>{guests}</strong> invitados</span></div>
     </div>
 
@@ -92,11 +95,12 @@ export function PeopleAdmin({ people, events, canManage, reload, notify }) {
 
     {filtered.length === 0 ? <div className="admin-management-empty"><UsersRound /><strong>No hay personas con esos filtros</strong><span>Prueba otra búsqueda o limpia los filtros.</span></div> : <div className="admin-people-grid">{filtered.map((person) => <article key={person.id}>
       <div className="admin-person-card__stripe" data-affiliation={person.church_affiliation} />
-      <div className="admin-person-card__head"><div className="admin-person-card__avatar">{person.full_name.slice(0, 2).toUpperCase()}</div><div><span>{personTypeLabel(person.person_type)}</span><h3>{person.full_name}</h3><p><Building2 /> {churchLabel(person.church_affiliation, person.church_name)}</p></div>{canManage && <button onClick={() => setEditor(person)} aria-label={`Editar ${person.full_name}`}><Pencil /></button>}</div>
+      <div className="admin-person-card__head"><div className="admin-person-card__avatar">{person.full_name.slice(0, 2).toUpperCase()}</div><div><span>{personTypeLabel(person.person_type)}</span><h3>{person.full_name}</h3><p><Building2 /> {churchLabel(person.church_affiliation, person.church_name, churches)}</p></div>{canManage && <button onClick={() => setEditor(person)} aria-label={`Editar ${person.full_name}`}><Pencil /></button>}</div>
       <div className="admin-person-card__contact">{person.email && <span><Mail /> {person.email}</span>}{person.phone && <span><Phone /> {person.phone}</span>}{(person.city || person.country) && <span><MapPin /> {[person.city, person.country].filter(Boolean).join(', ')}</span>}{!person.email && !person.phone && !person.city && !person.country && <span><UserRound /> Datos de contacto pendientes</span>}</div>
       <footer><span><CalendarDays /> {person.registration_count} {person.registration_count === 1 ? 'inscripción' : 'inscripciones'}</span><small>{person.last_registration_at ? `Última: ${new Date(person.last_registration_at).toLocaleDateString('es-ES')}` : 'Añadida manualmente'}</small></footer>
     </article>)}</div>}
 
-    {editor && <PersonEditor person={editor.mode === 'new' ? null : editor} onClose={() => setEditor(null)} onSaved={reload} notify={notify} />}
+    {editor && <PersonEditor person={editor.mode === 'new' ? null : editor} churchOptions={churchOptions} onClose={() => setEditor(null)} onSaved={reload} notify={notify} />}
+    {churchManagerOpen && <ChurchesManager churches={churches} onClose={() => setChurchManagerOpen(false)} onChanged={reloadChurches} notify={notify} />}
   </section>
 }
