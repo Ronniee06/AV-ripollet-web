@@ -14,6 +14,7 @@
 }
 
 .admin-shell, .admin-login, .admin-loading { min-height: 100vh; color: var(--admin-ink); background: var(--admin-paper); font-family: 'DM Sans', system-ui, sans-serif; }
+.admin-shell { width: 100%; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; overscroll-behavior: none; }
 .admin-shell *, .admin-login * { box-sizing: border-box; }
 .admin-shell button, .admin-login button, .admin-shell input, .admin-login input, .admin-shell textarea, .admin-shell select { font: inherit; }
 .admin-kicker { margin: 0 0 8px; color: var(--admin-coral); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
@@ -81,7 +82,7 @@
 .admin-primary:disabled { opacity: .55; }
 .admin-secondary { color: var(--admin-ink); background: white; border: 1px solid var(--admin-line); }
 
-.admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 270px; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; color: white; background: var(--admin-navy); }
+.admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 270px; height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; color: white; background: var(--admin-navy); }
 .admin-sidebar header { flex: 0 0 104px; height: 104px; padding: 22px 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,.12); }
 .admin-sidebar header img { width: 190px; }
 .admin-sidebar__close { display: none; }
@@ -98,7 +99,7 @@
 .admin-sidebar > footer button { width: 40px; height: 40px; display: grid; place-items: center; color: white; background: transparent; border: 1px solid rgba(255,255,255,.16); cursor: pointer; }
 .admin-mobile-toggle, .admin-mobile-backdrop { display: none; }
 
-.admin-content { min-width: 0; min-height: 100vh; margin-left: 270px; padding: 48px clamp(24px, 5vw, 70px) 80px; }
+.admin-content { min-width: 0; height: 100%; min-height: 0; margin-left: 270px; padding: 48px clamp(24px, 5vw, 70px) 80px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-gutter: stable; }
 .admin-topbar { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin-bottom: 38px; }
 .admin-topbar h1 { margin: 0; font-size: clamp(44px, 6vw, 70px); line-height: 1; }
 .admin-topbar > a { min-height: 44px; display: flex; align-items: center; gap: 9px; font-weight: 700; text-decoration: none; }
