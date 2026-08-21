@@ -81,15 +81,17 @@
 .admin-primary:disabled { opacity: .55; }
 .admin-secondary { color: var(--admin-ink); background: white; border: 1px solid var(--admin-line); }
 
-.admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 270px; display: flex; flex-direction: column; color: white; background: var(--admin-navy); }
-.admin-sidebar header { height: 104px; padding: 22px 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,.12); }
+.admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 270px; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; color: white; background: var(--admin-navy); }
+.admin-sidebar header { flex: 0 0 104px; height: 104px; padding: 22px 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,.12); }
 .admin-sidebar header img { width: 190px; }
 .admin-sidebar__close { display: none; }
-.admin-sidebar nav { padding: 24px 14px; display: grid; gap: 5px; }
+.admin-sidebar nav { flex: 1 1 auto; min-height: 0; padding: 24px 14px; display: grid; align-content: start; gap: 5px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-gutter: stable; }
+.admin-sidebar nav::-webkit-scrollbar { width: 6px; }
+.admin-sidebar nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 999px; }
 .admin-sidebar nav button { min-height: 48px; padding: 0 14px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.7); background: transparent; border: 0; border-radius: 8px; font-weight: 700; text-align: left; cursor: pointer; }
 .admin-sidebar nav button:hover, .admin-sidebar nav button.active { color: white; background: rgba(255,255,255,.1); }
 .admin-sidebar nav button.active { box-shadow: inset 3px 0 var(--admin-coral); }
-.admin-sidebar > footer { margin-top: auto; padding: 20px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.12); }
+.admin-sidebar > footer { flex: 0 0 auto; margin-top: 0; padding: 16px 18px max(16px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.12); background: var(--admin-navy); }
 .admin-sidebar > footer div { min-width: 0; flex: 1; display: grid; }
 .admin-sidebar > footer strong, .admin-sidebar > footer span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-sidebar > footer span { color: rgba(255,255,255,.58); font-size: 11px; }
