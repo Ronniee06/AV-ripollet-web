@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react'
 import {
-  ArrowRight, CalendarDays, Camera, Check, ChevronDown, CirclePlay, Clock3,
-  Mail, MapPin, Menu, MessageCircleHeart, MessagesSquare, Phone, Send, Users, X,
+  ArrowRight, CalendarDays, Check, ChevronDown, Clock3,
+  Mail, MapPin, Menu, MessageCircleHeart, Phone, Send, Users, X,
 } from 'lucide-react'
 import { api } from './api'
 import { AdminApp } from './admin/AdminApp'
 import { churchOptions } from './churches'
 
+function YouTubeLogo() {
+  return <svg viewBox="0 0 576 512" aria-hidden="true"><path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.5-48.6C458.8 64 288 64 288 64S117.2 64 74.8 75.5c-23.7 6.3-42.2 24.9-48.5 48.6C15 166.9 15 256.4 15 256.4s0 89.4 11.3 132.3c6.3 23.7 24.8 41.5 48.5 47.8C117.2 448 288 448 288 448s170.8 0 213.2-11.5c23.7-6.3 42.2-24.1 48.5-47.8 11.3-42.9 11.3-132.3 11.3-132.3s0-89.5-11.3-132.3zM232.1 337.6V175.2l142.8 81.2-142.8 81.2z" /></svg>
+}
+
+function InstagramLogo() {
+  return <svg viewBox="0 0 448 512" aria-hidden="true"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9S121.4 442.6 92 430.6c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" /></svg>
+}
+
+function FacebookLogo() {
+  return <svg viewBox="0 0 320 512" aria-hidden="true"><path d="M279.1 288l14.2-92.7h-88.9v-60.1c0-25.4 12.4-50.1 52.2-50.1H297V6.3S260.4 0 225.4 0c-73.2 0-121.1 44.4-121.1 124.7v70.6H22.9V288h81.4v224h100.2V288z" /></svg>
+}
+
 const socials = [
-  { name: 'YouTube', url: 'https://www.youtube.com/@alcancevictoriabcnn', icon: CirclePlay },
-  { name: 'Instagram', url: 'https://www.instagram.com/avbcnnorte/', icon: Camera },
-  { name: 'Facebook', url: 'https://www.facebook.com/alcance.barcelonanorte/?locale=es_ES', icon: MessagesSquare },
+  { name: 'YouTube', slug: 'youtube', url: 'https://www.youtube.com/@alcancevictoriabcnn', icon: YouTubeLogo },
+  { name: 'Instagram', slug: 'instagram', url: 'https://www.instagram.com/avbcnnorte/', icon: InstagramLogo },
+  { name: 'Facebook', slug: 'facebook', url: 'https://www.facebook.com/alcance.barcelonanorte/?locale=es_ES', icon: FacebookLogo },
 ]
 
 const schedule = [
@@ -388,7 +400,7 @@ function Privacy() {
 }
 
 function Footer() {
-  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, url, icon: Icon }) => <a key={name} href={url} target="_blank" rel="noreferrer" aria-label={name}><Icon /></a>)}</div><a href="#privacidad">Privacidad</a><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
+  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, slug, url, icon: Icon }) => <a className={`socials__${slug}`} key={name} href={url} target="_blank" rel="noreferrer" aria-label={`Visitar ${name}`} title={name}><Icon /></a>)}</div><a href="#privacidad">Privacidad</a><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
 }
 
 function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><Visit /><Privacy /></main><Footer /></> }
