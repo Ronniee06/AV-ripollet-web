@@ -124,6 +124,7 @@ export const api = {
   deleteRole: (id) => authenticatedWrite(`/admin/roles/${id}`, { method: 'DELETE' }),
 
   welcomePeople: (search = '') => request(`/admin/welcome${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  welcomeServices: () => request('/admin/welcome/services'),
   createWelcomePerson: (payload) => authenticatedWrite('/admin/welcome', { method: 'POST', body: JSON.stringify(payload) }),
   updateWelcomePerson: (id, payload) => authenticatedWrite(`/admin/welcome/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   addWelcomeVisit: (id, payload) => authenticatedWrite(`/admin/welcome/${id}/visits`, { method: 'POST', body: JSON.stringify(payload) }),

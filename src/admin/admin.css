@@ -595,6 +595,7 @@
 .welcome-count strong { font: 700 1.45rem/1 Georgia, serif; }
 .welcome-count span { font-size: .7rem; }
 .welcome-notes { display: block; margin-top: .5rem; font-size: .82rem; }
+.welcome-new-service { margin-top: .5rem; border-color: var(--admin-coral) !important; background: #fff9f7; }
 .roles-grid__icon { width: 46px; height: 46px; background: #eef2f4; display: grid; place-items: center; color: #09233b; }
 .role-editor__permissions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; max-height: 42vh; overflow: auto; padding: .2rem; }
 .role-editor__permissions label { border: 1px solid #e0e4e6; padding: .65rem; }
