@@ -12,6 +12,11 @@ const statusLabels = {
   cancelled: 'Cancelada', failed: 'Con error',
 }
 
+const subscriberStatusLabels = {
+  pending: 'Pendiente de confirmar', active: 'Activo',
+  unsubscribed: 'Baja', bounced: 'Rebotado',
+}
+
 function localDate(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -71,6 +76,7 @@ export function NewsletterAdmin({ subscribers, campaigns, provider, canManage, r
   const [editor, setEditor] = useState(null)
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
+  const newsletterManageEnabled = canManage && provider?.enabled
 
   const finish = async (message) => { setEditor(null); await reload(); notify(message) }
   const showPreview = async (id) => {
@@ -102,21 +108,21 @@ export function NewsletterAdmin({ subscribers, campaigns, provider, canManage, r
 
   return <>
     <section className="admin-panel admin-newsletter">
-      <div className="admin-panel__heading"><div><p className="admin-kicker">Comunidad</p><h2>Campañas</h2><p>Redacta, revisa, prueba y programa comunicaciones para los contactos suscritos.</p></div>{canManage && <button className="admin-primary" onClick={() => setEditor({})}><Plus size={18} /> Nueva campaña</button>}</div>
-      <div className={`admin-provider ${provider?.configured ? 'ready' : ''}`}><span>{provider?.configured ? 'Proveedor de correo preparado' : 'Envío real pendiente de configurar'}</span><small>{provider?.configured ? 'Resend está listo para pruebas y campañas.' : 'Puedes crear y previsualizar borradores. Añade las variables de Resend en el backend para enviar.'}</small></div>
+      <div className="admin-panel__heading"><div><p className="admin-kicker">Comunidad</p><h2>Campañas</h2><p>Consulta las campañas y los contactos registrados.</p></div>{newsletterManageEnabled && <button className="admin-primary" onClick={() => setEditor({})}><Plus size={18} /> Nueva campaña</button>}</div>
+      <div className={`admin-provider ${provider?.enabled && provider?.configured ? 'ready' : ''}`}><span>{!provider?.enabled ? 'Newsletter temporalmente desactivada' : provider?.configured ? 'Proveedor de correo preparado' : 'Envío real pendiente de configurar'}</span><small>{!provider?.enabled ? 'Este apartado está disponible solo para consulta; suscripciones, cambios y envíos están bloqueados.' : provider?.configured ? 'Resend está listo para pruebas y campañas.' : 'Añade las variables de Resend en el backend para enviar.'}</small></div>
       <div className="admin-campaigns">
         {campaigns.length === 0 && <div className="admin-newsletter-empty"><MailCheck /><strong>Todavía no hay campañas</strong><span>Crea el primer borrador cuando tengas una comunicación que enviar.</span></div>}
         {campaigns.map((campaign) => <article key={campaign.id}>
           <div><span className={`admin-status ${campaign.status}`}>{statusLabels[campaign.status] || campaign.status}</span><h3>{campaign.name}</h3><p>{campaign.subject}</p>{campaign.scheduled_at && <small>{campaign.status === 'scheduled' ? 'Programada' : 'Fecha prevista'}: {new Date(campaign.scheduled_at).toLocaleString('es-ES')}</small>}</div>
           <div className="admin-campaign-actions">
             <button onClick={() => showPreview(campaign.id)} title="Previsualizar"><Eye /></button>
-            {canManage && ['draft', 'failed'].includes(campaign.status) && <><button onClick={() => setEditor(campaign)} title="Editar"><Pencil /></button><button onClick={() => sendTest(campaign)} disabled={busy} title="Enviar prueba"><MailCheck /></button><button className="primary" onClick={() => sendCampaign(campaign)} disabled={busy} title="Enviar o programar"><Send /></button><button className="danger" onClick={() => remove(campaign)} title="Eliminar"><Trash2 /></button></>}
+            {newsletterManageEnabled && ['draft', 'failed'].includes(campaign.status) && <><button onClick={() => setEditor(campaign)} title="Editar"><Pencil /></button><button onClick={() => sendTest(campaign)} disabled={busy} title="Enviar prueba"><MailCheck /></button><button className="primary" onClick={() => sendCampaign(campaign)} disabled={busy} title="Enviar o programar"><Send /></button><button className="danger" onClick={() => remove(campaign)} title="Eliminar"><Trash2 /></button></>}
           </div>
         </article>)}
       </div>
       <div className="admin-newsletter-subscribers">
         <div><p className="admin-kicker">Audiencia</p><h3>Suscriptores</h3><p>{subscribers.filter((item) => item.status === 'active').length} activos de {subscribers.length} contactos</p></div>
-        <div className="admin-table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Estado</th><th>Consentimiento</th><th>Acción</th></tr></thead><tbody>{subscribers.map((item) => <tr key={item.id}><td>{item.full_name || '—'}</td><td>{item.email}</td><td><span className={`admin-status ${item.status}`}>{item.status}</span></td><td>{new Date(item.consent_at).toLocaleDateString('es-ES')}</td><td>{canManage && item.status === 'active' && <button className="admin-subscriber-action" onClick={() => changeSubscriber(item, 'unsubscribed')}>Dar de baja</button>}</td></tr>)}</tbody></table></div>
+        <div className="admin-table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Estado</th><th>Consentimiento</th><th>Acción</th></tr></thead><tbody>{subscribers.map((item) => <tr key={item.id}><td>{item.full_name || '—'}</td><td>{item.email}</td><td><span className={`admin-status ${item.status}`}>{subscriberStatusLabels[item.status] || item.status}</span></td><td>{new Date(item.consent_at).toLocaleDateString('es-ES')}</td><td>{newsletterManageEnabled && item.status === 'active' && <button className="admin-subscriber-action" onClick={() => changeSubscriber(item, 'unsubscribed')}>Dar de baja</button>}</td></tr>)}</tbody></table></div>
       </div>
     </section>
     {editor && <CampaignEditor value={editor.id ? editor : null} onClose={() => setEditor(null)} onSaved={finish} />}

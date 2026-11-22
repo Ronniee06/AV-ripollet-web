@@ -9,6 +9,8 @@ Web pública y panel administrativo de Alcance Victoria Barcelona Norte, constru
 - Eventos con menú/precio único o precios separados para adultos y niños.
 - Formulario privado de peticiones de oración.
 - Suscripción pública a newsletter con consentimiento.
+- Registro general de personas en `/registro`, con pasos adaptados a móvil y áreas de interés opcionales.
+- Enlace de registro en la navegación, llamada destacada en la portada y QR descargable desde Gestión → Configuración.
 - Ruta administrativa `/gestion` sin enlaces públicos visibles.
 - Login para usuarios autorizados.
 - Panel responsive con resumen, eventos, inscripciones, fotos, usuarios, newsletter y auditoría.
@@ -36,6 +38,8 @@ Copia `.env.example` a `.env.local`:
 
 ```env
 VITE_API_URL=http://localhost:8000/api
+VITE_NEWSLETTER_ENABLED=false
+VITE_PUBLIC_SITE_URL=http://localhost:5173
 ```
 
 No añadas secretos al frontend. Todas las variables `VITE_*` quedan visibles en el navegador.
@@ -77,6 +81,9 @@ Configuración prevista:
 | Build command | `npm run build` |
 | Output directory | `dist` |
 | Variable | `VITE_API_URL=https://URL-DE-LA-API/api` |
+| Variable | `VITE_PUBLIC_SITE_URL=https://URL-DE-LA-WEB` |
+
+La newsletter permanece visible pero sin formulario mientras `VITE_NEWSLETTER_ENABLED=false` (valor predeterminado).
 
 La ruta `/gestion` ya incluye el fallback SPA en `public/_redirects`. Las cabeceras de seguridad se publican desde `public/_headers`.
 

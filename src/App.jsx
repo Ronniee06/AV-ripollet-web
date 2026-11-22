@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, Clock3,
-  Mail, MapPin, Menu, MessageCircleHeart, Phone, Send, Users, X,
+  Mail, MapPin, Menu, MessageCircleHeart, Phone, Send, UserPlus, Users, X,
 } from 'lucide-react'
 import { api } from './api'
 import { AdminApp } from './admin/AdminApp'
 import { buildChurchOptions } from './churches'
+import { RegistrationConfirmation, RegistrationPage } from './RegistrationPage'
 
 function YouTubeLogo() {
   return <svg viewBox="0 0 576 512" aria-hidden="true"><path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.5-48.6C458.8 64 288 64 288 64S117.2 64 74.8 75.5c-23.7 6.3-42.2 24.9-48.5 48.6C15 166.9 15 256.4 15 256.4s0 89.4 11.3 132.3c6.3 23.7 24.8 41.5 48.5 47.8C117.2 448 288 448 288 448s170.8 0 213.2-11.5c23.7-6.3 42.2-24.1 48.5-47.8 11.3-42.9 11.3-132.3 11.3-132.3s0-89.5-11.3-132.3zM232.1 337.6V175.2l142.8 81.2-142.8 81.2z" /></svg>
@@ -24,6 +25,8 @@ const socials = [
   { name: 'Instagram', slug: 'instagram', url: 'https://www.instagram.com/avbcnnorte/', icon: InstagramLogo },
   { name: 'Facebook', slug: 'facebook', url: 'https://www.facebook.com/alcance.barcelonanorte/?locale=es_ES', icon: FacebookLogo },
 ]
+
+const newsletterEnabled = import.meta.env.VITE_NEWSLETTER_ENABLED === 'true'
 
 const schedule = [
   { day: 'Miércoles', name: 'Discipulado', time: '19:30' },
@@ -86,7 +89,7 @@ function Header() {
         {open ? <X /> : <Menu />}
       </button>
       <nav id="primary-navigation" className={open ? 'nav nav--open' : 'nav'} onClick={() => setOpen(false)} aria-label="Navegación principal">
-        <a href="#nosotros">Nosotros</a><a href="#valores">Valores</a><a href="#horarios">Horarios</a><a href="#eventos">Eventos</a>
+        <a href="#nosotros">Nosotros</a><a href="#valores">Valores</a><a href="#horarios">Horarios</a><a href="#eventos">Eventos</a><a href="/registro">Registro</a>
         <a className="button button--small" href="#visitanos">Quiero visitaros <ArrowRight size={16} /></a>
       </nav>
     </header>
@@ -370,6 +373,29 @@ function Prayer() {
 }
 
 function Newsletter() {
+  if (!newsletterEnabled) {
+    return (
+      <section className="newsletter" aria-labelledby="newsletter-title">
+        <div>
+          <p className="eyebrow eyebrow--light">Mantente cerca</p>
+          <h2 id="newsletter-title">Noticias que fortalecen nuestra comunidad.</h2>
+          <p>Este espacio informará próximamente sobre eventos, horarios especiales y novedades de la iglesia.</p>
+        </div>
+        <div className="newsletter__standby" role="status">
+          <Mail aria-hidden="true" />
+          <div>
+            <strong>Newsletter temporalmente desactivada</strong>
+            <p>La información permanece visible, pero ahora mismo no solicitamos datos ni aceptamos suscripciones.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return <NewsletterSignup />
+}
+
+function NewsletterSignup() {
   const [form, setForm] = useState({ full_name: '', email: '', consent: false })
   const [status, setStatus] = useState('idle')
   const submit = async (event) => {
@@ -383,7 +409,8 @@ function Newsletter() {
         <label>Nombre <small>(opcional)</small><input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></label>
         <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
         <label className="newsletter__consent"><input type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} required /> Quiero recibir comunicaciones de Alcance Victoria Barcelona Norte y he leído la <a href="#privacidad">información de privacidad</a>.</label>
-        <button className="button button--coral" disabled={status === 'sending'}>{status === 'sending' ? 'Guardando…' : status === 'done' ? <><Check /> Suscripción confirmada</> : <>Quiero recibir noticias <Send size={17} /></>}</button>
+        <button className="button button--coral" disabled={status === 'sending'}>{status === 'sending' ? 'Enviando…' : status === 'done' ? <><Check /> Revisa tu correo</> : <>Quiero recibir noticias <Send size={17} /></>}</button>
+        {status === 'done' && <p className="newsletter__notice">Te hemos enviado un enlace de confirmación válido durante 24 horas.</p>}
         {status === 'error' && <p className="form-error">No se pudo completar la suscripción. Inténtalo de nuevo.</p>}
       </form>
     </section>
@@ -396,14 +423,53 @@ function Visit() {
   )
 }
 
+function MemberRegistrationCallout() {
+  return <section className="member-registration-callout"><div><p className="eyebrow eyebrow--light">Tu lugar en la familia</p><h2>Queremos conocerte<br />y caminar contigo.</h2><p>Si esta es tu iglesia, completa tu ficha para que podamos mantener tus datos al día y acompañarte mejor.</p></div><a className="button button--coral" href="/registro"><UserPlus /> Completar mi registro <ArrowRight /></a></section>
+}
+
 function Privacy() {
-  return <section className="privacy" id="privacidad"><div><p className="eyebrow">Tus datos importan</p><h2>Información de privacidad</h2></div><div><p><strong>Responsable:</strong> Alcance Victoria Barcelona Norte.</p><p>Usamos los datos que nos das únicamente para gestionar inscripciones, atender peticiones de oración o enviarte noticias cuando lo has autorizado. El equipo autorizado de la iglesia puede acceder a ellos y no se venden a terceros.</p><p>Puedes solicitar acceso, corrección o eliminación contactando directamente con la iglesia. Conservaremos los datos solo durante el tiempo necesario para cada finalidad y las obligaciones aplicables.</p><small>Antes de publicar comercialmente la plataforma, este texto debe completarse con los datos legales y el canal formal de contacto del responsable.</small></div></section>
+  return <section className="privacy" id="privacidad"><div><p className="eyebrow">Tus datos importan</p><h2>Información de privacidad</h2></div><div><p><strong>Responsable:</strong> Alcance Victoria Barcelona Norte.</p><p>Usamos los datos que nos das únicamente para mantener la ficha interna de miembros y asistentes, gestionar inscripciones, atender peticiones de oración o enviarte noticias cuando lo has autorizado. La relación con una comunidad religiosa puede revelar información especialmente protegida, por lo que el acceso queda limitado al equipo autorizado y no comunicamos estos datos fuera de la iglesia sin una base válida.</p><p>Puedes solicitar acceso, corrección o eliminación contactando directamente con la iglesia. Conservaremos los datos solo durante el tiempo necesario para cada finalidad y las obligaciones aplicables.</p><small>Antes de publicar comercialmente la plataforma, este texto debe completarse con los datos legales y el canal formal de contacto del responsable.</small></div></section>
 }
 
 function Footer() {
-  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, slug, url, icon: Icon }) => <a className={`socials__${slug}`} key={name} href={url} target="_blank" rel="noreferrer" aria-label={`Visitar ${name}`} title={name}><Icon /></a>)}</div><a href="#privacidad">Privacidad</a><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
+  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, slug, url, icon: Icon }) => <a className={`socials__${slug}`} key={name} href={url} target="_blank" rel="noreferrer" aria-label={`Visitar ${name}`} title={name}><Icon /></a>)}</div><nav className="footer-links" aria-label="Enlaces legales y de registro"><a href="/registro">Registro</a><a href="#privacidad">Privacidad</a></nav><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
 }
 
-function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><Visit /><Privacy /></main><Footer /></> }
+function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><MemberRegistrationCallout /><Visit /><Privacy /></main><Footer /></> }
 
-export default function App() { return window.location.pathname.startsWith('/gestion') ? <AdminApp /> : <Home /> }
+function NewsletterConfirmation() {
+  const token = new URLSearchParams(window.location.search).get('token')
+  const requested = useRef(false)
+  const [status, setStatus] = useState(token ? 'checking' : 'error')
+  const [message, setMessage] = useState(token ? 'Estamos verificando tu enlace…' : 'El enlace de confirmación no es válido.')
+
+  useEffect(() => {
+    if (requested.current || !token) return
+    requested.current = true
+    api.confirmNewsletter(token).then((result) => {
+      window.history.replaceState({}, '', '/newsletter/confirm')
+      setStatus('success'); setMessage(result.message)
+    }).catch((error) => {
+      setStatus('error'); setMessage(error.message)
+    })
+  }, [token])
+
+  return <main className="newsletter-confirmation">
+    <section>
+      <Brand light />
+      <div className={`newsletter-confirmation__icon ${status}`}><Mail /></div>
+      <p className="eyebrow eyebrow--light">Newsletter</p>
+      <h1>{status === 'success' ? 'Suscripción confirmada' : status === 'error' ? 'No se pudo confirmar' : 'Confirmando…'}</h1>
+      <p>{message}</p>
+      <a className="button button--coral" href="/">Volver a la web</a>
+    </section>
+  </main>
+}
+
+export default function App() {
+  if (window.location.pathname.startsWith('/gestion')) return <AdminApp />
+  if (window.location.pathname.startsWith('/registro/confirm')) return <RegistrationConfirmation />
+  if (window.location.pathname.startsWith('/registro')) return <RegistrationPage />
+  if (newsletterEnabled && window.location.pathname.startsWith('/newsletter/confirm')) return <NewsletterConfirmation />
+  return <Home />
+}

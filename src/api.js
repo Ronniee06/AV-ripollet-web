@@ -67,6 +67,15 @@ export const api = {
     method: 'PATCH', body: JSON.stringify(changes),
   }),
   subscribeNewsletter: (payload) => request('/newsletter/subscribe', { method: 'POST', body: JSON.stringify(payload) }),
+  confirmNewsletter: (token) => request('/newsletter/confirm', {
+    method: 'POST', body: JSON.stringify({ token }),
+  }),
+  submitPeopleRegistration: (payload) => request('/people-registration', {
+    method: 'POST', body: JSON.stringify(payload),
+  }),
+  confirmPeopleRegistration: (token, preference = null) => request('/people-registration/confirm', {
+    method: 'POST', body: JSON.stringify({ token, preference }),
+  }),
 
   login: async (email, password) => {
     const data = await request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
@@ -111,6 +120,10 @@ export const api = {
   people: () => request('/admin/people'),
   createPerson: (payload) => authenticatedWrite('/admin/people', { method: 'POST', body: JSON.stringify(payload) }),
   updatePerson: (id, payload) => authenticatedWrite(`/admin/people/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  peopleRegistrationRequests: () => request('/admin/people-registration-requests'),
+  resolvePeopleRegistration: (id, payload) => authenticatedWrite(`/admin/people-registration-requests/${id}`, {
+    method: 'PATCH', body: JSON.stringify(payload),
+  }),
   adminChurches: () => request('/admin/churches'),
   createChurch: (payload) => authenticatedWrite('/admin/churches', { method: 'POST', body: JSON.stringify(payload) }),
   updateChurch: (id, payload) => authenticatedWrite(`/admin/churches/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
