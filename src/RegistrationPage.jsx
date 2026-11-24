@@ -81,7 +81,7 @@ export function RegistrationPage() {
 
       <div className="registration-form-shell">
         {status === 'done' ? <div className="registration-success"><span><Check /></span><p className="registration-kicker">Registro enviado</p><h2>Gracias por dar este paso.</h2><p>{message}</p><a className="button button--coral" href="/">Volver al inicio</a></div> : <form onSubmit={submit}>
-          <header><span>Paso {step} de 3</span><div className="registration-progress" aria-hidden="true"><i style={{ width: `${step * 33.333}%` }} /></div></header>
+          <header><span>Paso {step} de 3</span><div className="registration-progress" role="progressbar" aria-label={`Paso ${step} de 3`} aria-valuemin="1" aria-valuemax="3" aria-valuenow={step}><i style={{ width: `${step * 33.333}%` }} /></div></header>
 
           {step === 1 && <fieldset><legend><span><UsersRound /></span><div><small>Empecemos por ti</small><strong>¿Cómo podemos reconocerte?</strong></div></legend>
             <label className="wide">Nombre y apellidos<input autoComplete="name" value={form.full_name} onChange={(event) => update('full_name', event.target.value)} required minLength="2" /></label>

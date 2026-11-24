@@ -432,7 +432,7 @@ function Privacy() {
 }
 
 function Footer() {
-  return <footer><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, slug, url, icon: Icon }) => <a className={`socials__${slug}`} key={name} href={url} target="_blank" rel="noreferrer" aria-label={`Visitar ${name}`} title={name}><Icon /></a>)}</div><nav className="footer-links" aria-label="Enlaces legales y de registro"><a href="/registro">Registro</a><a href="#privacidad">Privacidad</a></nav><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
+  return <footer className="site-footer"><Brand light /><p>Una iglesia para toda la familia en Ripollet.</p><div className="socials">{socials.map(({ name, slug, url, icon: Icon }) => <a className={`socials__${slug}`} key={name} href={url} target="_blank" rel="noreferrer" aria-label={`Visitar ${name}`} title={name}><Icon /></a>)}</div><nav className="footer-links" aria-label="Enlaces legales y de registro"><a href="/registro">Registro</a><a href="#privacidad">Privacidad</a></nav><small>© {new Date().getFullYear()} Alcance Victoria Barcelona Norte</small></footer>
 }
 
 function Home() { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><Hero /><main id="contenido" tabIndex="-1"><Intro /><Values /><Schedule /><Events /><Ministries /><CommunityGallery /><Pastors /><Prayer /><Newsletter /><MemberRegistrationCallout /><Visit /><Privacy /></main><Footer /></> }
