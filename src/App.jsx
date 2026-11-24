@@ -29,11 +29,11 @@ const socials = [
 const newsletterEnabled = import.meta.env.VITE_NEWSLETTER_ENABLED === 'true'
 
 const schedule = [
-  { day: 'Miércoles', name: 'Discipulado', time: '19:30' },
-  { day: 'Viernes', name: 'Ayuno y oración', time: '19:30' },
+  { day: 'Miércoles', name: 'Discipulado', time: '20:00' },
+  { day: 'Viernes', name: 'Ayuno y oración', time: '20:00' },
   { day: 'Sábado', name: 'Jóvenes G.A.N.G.', time: '17:30' },
   { day: '1er domingo', name: 'Súper Celebración', time: '10:00' },
-  { day: 'Otros domingos', name: 'Celebración', time: '10:00 · 12:00' },
+  { day: 'Otros domingos', name: 'Celebración', time: '10:00' },
 ]
 
 const ministries = [
