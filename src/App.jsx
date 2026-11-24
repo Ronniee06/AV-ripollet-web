@@ -32,8 +32,7 @@ const schedule = [
   { day: 'Miércoles', name: 'Discipulado', time: '20:00' },
   { day: 'Viernes', name: 'Ayuno y oración', time: '20:00' },
   { day: 'Sábado', name: 'Jóvenes G.A.N.G.', time: '17:30' },
-  { day: '1er domingo', name: 'Súper Celebración', time: '10:00' },
-  { day: 'Otros domingos', name: 'Celebración', time: '10:00' },
+  { day: 'Domingos', name: 'Celebración', time: '10:00' },
 ]
 
 const ministries = [
