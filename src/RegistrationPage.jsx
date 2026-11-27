@@ -69,7 +69,7 @@ export function RegistrationPage() {
   }
 
   return <main className="registration-page">
-    <header className="registration-topbar"><RegistrationBrand /><a href="/"><ArrowLeft /> Volver a la web</a></header>
+    <header className="registration-topbar"><RegistrationBrand /><a href="/"><ArrowLeft /> Ir al inicio</a></header>
     <section className="registration-layout">
       <aside className="registration-story">
         <p className="registration-kicker">Tu lugar en la familia</p>
@@ -133,5 +133,5 @@ export function RegistrationConfirmation() {
     } catch (error) { setState({ status: 'error', message: error.message, requiresChoice: false }) }
   }
 
-  return <main className="registration-confirmation"><section><RegistrationBrand /><span className={`registration-confirmation__icon ${state.status}`}>{state.status === 'done' ? <Check /> : <Mail />}</span><p className="registration-kicker">Registro de la iglesia</p><h1>{state.status === 'choice' ? 'Ya tienes una ficha' : state.status === 'done' ? 'Registro confirmado' : state.status === 'error' ? 'No se pudo confirmar' : 'Confirmando…'}</h1><p>{state.message}</p>{state.requiresChoice ? <div className="registration-confirmation__actions"><button className="button button--coral" onClick={() => choose('update')}>Solicitar actualización</button><button className="registration-back" onClick={() => choose('keep')}>Mantener mi ficha actual</button></div> : <a className="button button--coral" href="/">Volver a la web</a>}</section></main>
+  return <main className="registration-confirmation"><section><RegistrationBrand /><span className={`registration-confirmation__icon ${state.status}`}>{state.status === 'done' ? <Check /> : <Mail />}</span><p className="registration-kicker">Registro de la iglesia</p><h1>{state.status === 'choice' ? 'Ya tienes una ficha' : state.status === 'done' ? 'Registro confirmado' : state.status === 'error' ? 'No se pudo confirmar' : 'Confirmando…'}</h1><p>{state.message}</p>{state.requiresChoice ? <div className="registration-confirmation__actions"><button className="button button--coral" onClick={() => choose('update')}>Solicitar actualización</button><button className="registration-back" onClick={() => choose('keep')}>Mantener mi ficha actual</button></div> : <a className="button button--coral" href="/">Ir al inicio</a>}</section></main>
 }

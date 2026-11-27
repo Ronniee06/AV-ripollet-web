@@ -166,7 +166,7 @@ function Schedule() {
     <section className="schedule section" id="horarios">
       <div className="section-heading">
         <div><p className="eyebrow eyebrow--light">Nos reunimos cada semana</p><h2>Tu próxima<br />{' '}visita empieza aquí.</h2></div>
-        <p>El primer domingo de cada mes celebramos juntos en un único servicio especial a las 10:00.</p>
+        <p>Cada domingo celebramos juntos en un único servicio a las 10:00.</p>
       </div>
       <div className="schedule__list">
         {schedule.map((item) => <div className="schedule__row" key={item.day}><span>{item.day}</span><strong>{item.name}</strong><time>{item.time}</time></div>)}
@@ -418,7 +418,7 @@ function NewsletterSignup() {
 
 function Visit() {
   return (
-    <section className="visit" id="visitanos"><div><p className="eyebrow">Ven a conocernos</p><h2>Este domingo,<br />{' '}te esperamos.</h2></div><div><p><MapPin /> Ripollet, Barcelona</p><p><Clock3 /> Domingos · 10:00 y 12:00</p><a className="button" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=Alcance+Victoria+Barcelona+Norte+Ripollet">Cómo llegar <ArrowRight size={17} /></a></div></section>
+    <section className="visit" id="visitanos"><div><p className="eyebrow">Ven a conocernos</p><h2>Este domingo,<br />{' '}te esperamos.</h2></div><div><p><MapPin /> Ripollet, Barcelona</p><p><Clock3 /> Domingos · 10:00</p><a className="button" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=Alcance+Victoria+Barcelona+Norte+Ripollet">Cómo llegar <ArrowRight size={17} /></a></div></section>
   )
 }
 
@@ -460,7 +460,7 @@ function NewsletterConfirmation() {
       <p className="eyebrow eyebrow--light">Newsletter</p>
       <h1>{status === 'success' ? 'Suscripción confirmada' : status === 'error' ? 'No se pudo confirmar' : 'Confirmando…'}</h1>
       <p>{message}</p>
-      <a className="button button--coral" href="/">Volver a la web</a>
+      <a className="button button--coral" href="/">Ir al inicio</a>
     </section>
   </main>
 }

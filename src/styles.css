@@ -273,11 +273,13 @@ input:focus, textarea:focus { border-color: var(--coral); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
 
 @media (max-width: 900px) {
-  .header { width: calc(100% - 40px); height: 84px; }
+  .header { width: calc(100% - 40px); height: auto; min-height: 84px; flex-wrap: wrap; }
+  .header > .brand, .header > .menu-button { margin-block: 9px; }
+  .hero { height: auto; max-height: none; padding-bottom: 80px; }
   .menu-button { display: grid; }
-  .nav { position: absolute; top: 83px; left: 0; right: 0; max-height: 0; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; padding: 0; background: transparent; border-top: 1px solid transparent; transform: translateY(-8px); transition: max-height .3s ease, opacity .2s ease, transform .3s ease, padding .3s ease, border-color .3s ease, visibility 0s linear .3s; }
+  .nav { position: static; width: 100%; display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.18); }
   .nav > a:not(.button) { min-height: 30px; padding: 0 8px; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
-  .nav--open { max-height: 170px; opacity: 1; visibility: visible; pointer-events: auto; padding: 7px 0 9px; border-top-color: rgba(255,255,255,.18); transform: translateY(0); transition-delay: 0s; }
+  .nav--open { display: grid; }
   .nav .button { width: 100%; min-height: 36px; grid-column: 1 / -1; margin-top: 2px; }
   .hero__content { width: calc(100% - 40px); }
   .hero__veil { background: linear-gradient(90deg, rgba(5,19,34,.93), rgba(5,19,34,.45)), linear-gradient(0deg, rgba(5,19,34,.65), transparent 45%); }

@@ -232,7 +232,7 @@ function Login({ onLogin }) {
 
   return (
     <main className="admin-login">
-      <a className="admin-login__back" href="/"><ArrowLeft size={17} /> Volver a la web</a>
+      <a className="admin-login__back" href="/"><ArrowLeft size={17} /> Ir al inicio</a>
       <section className="admin-login__shell">
         <div className="admin-login__visual" aria-roledescription="carrusel" aria-label="Alcance Victoria en el mundo">
           {slides.map((slide, index) => (
@@ -891,7 +891,7 @@ export function AdminApp() {
       </aside>
 
       <main className="admin-content">
-        <header className="admin-topbar"><div><p className="admin-kicker">Organización</p><h1>{eventManagementId ? 'Gestión de evento' : navigation.find(([key]) => key === section)?.[2]}</h1></div><a href="/">Ver web <ArrowLeft size={16} /></a></header>
+        <header className="admin-topbar"><div><p className="admin-kicker">Organización</p><h1>{eventManagementId ? 'Gestión de evento' : navigation.find(([key]) => key === section)?.[2]}</h1></div><a href="/">Ir al inicio <ArrowLeft size={16} /></a></header>
         {notice && <div className="admin-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Cerrar"><X size={16} /></button><span className="admin-notice__timer" aria-hidden="true" /></div>}
 
         {section === 'overview' && <>
