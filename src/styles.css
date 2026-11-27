@@ -277,11 +277,12 @@ input:focus, textarea:focus { border-color: var(--coral); }
   .header > .brand, .header > .menu-button { margin-block: 9px; }
   .hero { height: auto; max-height: none; padding-bottom: 80px; }
   .menu-button { display: grid; }
-  .nav { position: static; width: 100%; display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.18); }
+  .nav { position: static; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; max-height: 0; overflow: hidden; padding: 0; opacity: 0; visibility: hidden; pointer-events: none; border-top: 1px solid transparent; transition: max-height .32s ease-in-out, padding .32s ease-in-out, opacity .2s ease, border-color .32s ease, visibility 0s linear .32s; }
   .nav > a:not(.button) { min-height: 30px; padding: 0 8px; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
-  .nav--open { display: grid; }
+  .nav--open { max-height: 240px; padding: 16px 0; opacity: 1; visibility: visible; pointer-events: auto; border-top-color: rgba(255,255,255,.18); transition-delay: 0s; }
   .nav .button { width: 100%; min-height: 36px; grid-column: 1 / -1; margin-top: 2px; }
-  .hero__content { width: calc(100% - 40px); }
+  .hero__content { width: calc(100% - 40px); transition: padding-top .32s ease-in-out; }
+  .hero:has(.nav--open) .hero__content { padding-top: 28px; }
   .hero__veil { background: linear-gradient(90deg, rgba(5,19,34,.93), rgba(5,19,34,.45)), linear-gradient(0deg, rgba(5,19,34,.65), transparent 45%); }
   .section, .prayer, .newsletter { padding: 90px 28px; }
   .intro, .section-heading, .ministries__intro, .prayer, .newsletter, .privacy, .values__header { grid-template-columns: 1fr; gap: 40px; }
@@ -351,4 +352,8 @@ input:focus, textarea:focus { border-color: var(--coral); }
   .site-footer { grid-template-columns: 1fr; }
   .footer-links { justify-content: flex-start; }
   .socials { grid-row: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav, .hero__content { transition: none; }
 }
