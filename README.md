@@ -44,6 +44,12 @@ VITE_PUBLIC_SITE_URL=http://localhost:5173
 
 No añadas secretos al frontend. Todas las variables `VITE_*` quedan visibles en el navegador.
 
+## Instalación en móviles
+
+El manifiesto de `public/manifest.webmanifest` solicita pantalla completa al abrir la app desde su icono instalado. Si el navegador no admite ese modo, puede usar el modo independiente (`standalone`). En iOS se incluye la configuración para abrirla como app desde la pantalla de inicio; el sistema puede mantener su barra de estado.
+
+Después de desplegar estos cambios por HTTPS, elimina cualquier acceso directo antiguo y vuelve a instalar la web desde el menú del navegador (en iOS: Compartir → Añadir a pantalla de inicio). Comprueba el arranque desde el icono y la navegación por las rutas internas en un móvil real. Los enlaces externos pueden abrir el navegador. Esta configuración no añade funcionamiento sin conexión.
+
 ## Acceso administrativo
 
 Visita directamente:

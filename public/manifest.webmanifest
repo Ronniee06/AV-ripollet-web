@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Alcance Victoria Barcelona Norte",
+  "short_name": "AV Barcelona",
+  "description": "Un lugar que puedes llamar hogar, gente que puedes llamar familia.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "background_color": "#07182b",
+  "theme_color": "#07182b",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
